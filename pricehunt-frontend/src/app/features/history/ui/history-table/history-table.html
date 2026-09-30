@@ -1,0 +1,122 @@
+@if (errorMessage(); as message) {
+  <div
+    role="alert"
+    class="flex flex-wrap items-center gap-3 rounded-card bg-rose-50 px-4 py-3 text-rose-800"
+  >
+    <span>{{ message }}</span>
+    <button
+      type="button"
+      class="rounded-md border border-rose-300 px-3 py-1 text-sm font-medium hover:bg-rose-100"
+      (click)="retry.emit()"
+    >
+      Try again
+    </button>
+  </div>
+} @else {
+  <div
+    class="overflow-x-auto rounded-card border border-slate-200 bg-white"
+    [attr.aria-busy]="loading()"
+  >
+    <table class="w-full text-left text-sm">
+      <caption class="sr-only">
+        Price history
+      </caption>
+      <thead class="border-b border-slate-200 bg-slate-50 text-xs text-slate-500">
+        <tr>
+          @for (column of columns; track column.field) {
+            <th
+              scope="col"
+              class="px-4 py-2 font-medium"
+              [class.text-right]="column.numeric"
+              [attr.aria-sort]="ariaSort(column.field)"
+            >
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 rounded py-1 font-medium hover:text-slate-900"
+                [class.text-slate-900]="column.field === sortBy()"
+                (click)="sortChange.emit(column.field)"
+              >
+                {{ column.label }}
+                <span aria-hidden="true" class="w-3 text-center">
+                  @switch (ariaSort(column.field)) {
+                    @case ('ascending') {
+                      ↑
+                    }
+                    @case ('descending') {
+                      ↓
+                    }
+                    @default {
+                      <span class="text-slate-300">↕</span>
+                    }
+                  }
+                </span>
+              </button>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody [class.opacity-60]="loading() && items()">
+        @if (items(); as rows) {
+          @for (item of rows; track item.id) {
+            <tr
+              class="border-b border-slate-100 last:border-0"
+              [class.text-slate-500]="item.outcome !== 'Succeeded'"
+            >
+              <td class="px-4 py-3 whitespace-nowrap">{{ formatDateTime(item.receivedAt) }}</td>
+              <td class="px-4 py-3">
+                <span class="block font-medium">
+                  {{ item.origin }} <span aria-hidden="true">→</span><span class="sr-only">to</span>
+                  {{ item.destination }}
+                </span>
+                <span class="block text-xs text-slate-500">
+                  Ships {{ formatDateRange(item.shipDateFrom, item.shipDateTo) }}
+                </span>
+              </td>
+              <td class="px-4 py-3">{{ item.supplierName }}</td>
+              <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">
+                @if (item.price; as price) {
+                  {{ formatMoney(price.amount, price.currency) }}
+                } @else {
+                  <span
+                    class="mr-2 rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class]="outcomeClasses[item.outcome]"
+                  >
+                    {{ outcomeLabels[item.outcome] }}
+                  </span>
+                  <span aria-hidden="true">—</span><span class="sr-only">No price</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums">
+                {{ formatDuration(item.responseTimeMs) }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-12 text-center">
+                <p class="font-medium text-slate-700">No quotes match these filters.</p>
+                <p class="text-sm text-slate-500">Try a wider date range, or run a search first.</p>
+              </td>
+            </tr>
+          }
+        } @else {
+          @for (row of skeletonRows; track row) {
+            <tr class="border-b border-slate-100 last:border-0">
+              @for (column of columns; track column.field) {
+                <td class="px-4 py-4">
+                  <span
+                    class="block h-3 rounded bg-slate-200 motion-safe:animate-pulse"
+                    [class.ml-auto]="column.numeric"
+                    [class.w-16]="column.numeric"
+                  ></span>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (!items()) {
+      <p class="sr-only" role="status">Loading the price history</p>
+    }
+  </div>
+}

@@ -1,0 +1,43 @@
+<div class="space-y-6">
+  <header class="space-y-1">
+    <h1 class="text-2xl font-semibold tracking-tight">Price history</h1>
+    <p class="text-slate-600">
+      Every quote your searches received. The filters live in the address bar, so a link opens the
+      same view.
+    </p>
+  </header>
+
+  <ph-history-filters
+    [query]="store.query()"
+    [today]="store.today"
+    [originText]="store.originText()"
+    [destinationText]="store.destinationText()"
+    [suppliers]="suppliers()"
+    (fromChange)="store.setFrom($event)"
+    (toChange)="store.setTo($event)"
+    (suppliersChange)="store.setSuppliers($event)"
+    (originInput)="store.typeOrigin($event)"
+    (destinationInput)="store.typeDestination($event)"
+    (includeFailuresChange)="store.setIncludeFailures($event)"
+  />
+
+  <section aria-label="Results" class="space-y-3">
+    <ph-history-table
+      [items]="store.page()?.items"
+      [loading]="store.loading()"
+      [errorMessage]="store.errorMessage()"
+      [sortBy]="store.query().sortBy"
+      [sortDirection]="store.query().sortDirection"
+      (sortChange)="store.sortBy($event)"
+      (retry)="retry()"
+    />
+    @if (!store.errorMessage()) {
+      <ph-history-pagination
+        [summary]="store.summary()"
+        [pageSize]="store.query().pageSize"
+        (pageChange)="store.goToPage($event)"
+        (pageSizeChange)="store.setPageSize($event)"
+      />
+    }
+  </section>
+</div>

@@ -95,6 +95,8 @@
           <label class="flex items-center gap-2 text-sm text-slate-800">
             <input
               #checkbox
+              name="suppliers"
+              [value]="supplier.id"
               type="checkbox"
               class="size-4 accent-accent-600"
               [checked]="selectedIds().has(supplier.id)"

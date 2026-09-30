@@ -17,3 +17,9 @@ export function startOfLocalDay(isoDate: string): Date {
   // A date-time without an offset is local time; a bare date would be read as UTC.
   return new Date(`${isoDate}T00:00:00`);
 }
+
+/** Whether `value` is a real calendar day as `yyyy-MM-dd`, with a four-digit year. */
+export function isIsoDate(value: string): boolean {
+  // 2026-02-31 doesn't survive the round trip.
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && toLocalIsoDate(startOfLocalDay(value)) === value;
+}

@@ -1,0 +1,94 @@
+<form
+  aria-label="Filter the price history"
+  class="grid gap-4 rounded-card border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
+  (submit)="$event.preventDefault()"
+>
+  <div class="space-y-1">
+    <label for="history-from" class="block text-sm font-medium text-slate-700">From date</label>
+    <input
+      #fromInput
+      id="history-from"
+      type="date"
+      class="block h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+      [value]="query().from"
+      [max]="query().to"
+      (change)="fromChange.emit(fromInput.value)"
+    />
+  </div>
+
+  <div class="space-y-1">
+    <label for="history-to" class="block text-sm font-medium text-slate-700">To date</label>
+    <input
+      #toInput
+      id="history-to"
+      type="date"
+      class="block h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+      [value]="query().to"
+      [min]="query().from"
+      [max]="today()"
+      (change)="toChange.emit(toInput.value)"
+    />
+  </div>
+
+  <div class="space-y-1">
+    <span id="history-suppliers-label" class="block text-sm font-medium text-slate-700">
+      Suppliers
+    </span>
+    <ph-supplier-multiselect
+      labelledBy="history-suppliers-label"
+      [suppliers]="suppliers()"
+      [selected]="query().suppliers"
+      (selectedChange)="suppliersChange.emit($event)"
+    />
+  </div>
+
+  <div class="space-y-1">
+    <label for="history-origin" class="block text-sm font-medium text-slate-700">Origin</label>
+    <input
+      #originBox
+      id="history-origin"
+      type="search"
+      autocomplete="off"
+      placeholder="Any origin"
+      class="block h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+      [value]="originText()"
+      (input)="originInput.emit(originBox.value)"
+    />
+  </div>
+
+  <div class="space-y-1">
+    <label for="history-destination" class="block text-sm font-medium text-slate-700">
+      Destination
+    </label>
+    <input
+      #destinationBox
+      id="history-destination"
+      type="search"
+      autocomplete="off"
+      placeholder="Any destination"
+      class="block h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+      [value]="destinationText()"
+      (input)="destinationInput.emit(destinationBox.value)"
+    />
+  </div>
+
+  <div class="flex items-end pb-2">
+    <label class="inline-flex items-start gap-2 text-sm">
+      <input
+        #failuresBox
+        id="history-failures"
+        type="checkbox"
+        aria-describedby="history-failures-hint"
+        class="mt-0.5 size-4 accent-accent-700"
+        [checked]="query().includeFailures"
+        (change)="includeFailuresChange.emit(failuresBox.checked)"
+      />
+      <span>
+        <span class="font-medium text-slate-700">Include failures</span>
+        <span id="history-failures-hint" class="block text-xs text-slate-500">
+          Failed, timed-out and cancelled responses
+        </span>
+      </span>
+    </label>
+  </div>
+</form>

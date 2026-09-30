@@ -1,4 +1,4 @@
-import { addDays, startOfLocalDay, toLocalIsoDate } from './local-date';
+import { addDays, isIsoDate, startOfLocalDay, toLocalIsoDate } from './local-date';
 
 describe('local dates', () => {
   it('formats the local calendar date', () => {
@@ -22,5 +22,15 @@ describe('local dates', () => {
       midnight.getHours(),
       midnight.getMinutes(),
     ]).toEqual([2026, 8, 30, 0, 0]);
+  });
+
+  it('accepts only real calendar days with a four-digit year', () => {
+    expect(isIsoDate('2026-09-30')).toBe(true);
+    expect(isIsoDate('2028-02-29')).toBe(true);
+    expect(isIsoDate('2026-02-29')).toBe(false);
+    expect(isIsoDate('2026-02-31')).toBe(false);
+    expect(isIsoDate('275759-09-28')).toBe(false);
+    expect(isIsoDate('2026-9-30')).toBe(false);
+    expect(isIsoDate('')).toBe(false);
   });
 });
