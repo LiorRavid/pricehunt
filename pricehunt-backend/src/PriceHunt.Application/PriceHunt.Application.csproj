@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PriceHunt.Domain\PriceHunt.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

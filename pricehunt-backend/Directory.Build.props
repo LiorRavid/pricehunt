@@ -1,0 +1,15 @@
+<Project>
+  <!-- Shared settings for every backend project. The build fails on any compiler warning,
+       analyzer finding or code-style violation (rules in the repository's .editorconfig). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- XML docs on public APIs; also required for IDE0005 (unnecessary usings) to run in the build. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

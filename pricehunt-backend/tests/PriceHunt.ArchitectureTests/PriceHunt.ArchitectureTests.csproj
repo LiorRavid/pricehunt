@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PriceHunt.Api\PriceHunt.Api.csproj" />
+    <ProjectReference Include="..\..\src\PriceHunt.Application\PriceHunt.Application.csproj" />
+    <ProjectReference Include="..\..\src\PriceHunt.Domain\PriceHunt.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PriceHunt.Infrastructure\PriceHunt.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

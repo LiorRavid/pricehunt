@@ -1,0 +1,7 @@
+@host = http://localhost:5080
+
+### Liveness
+GET {{host}}/health
+
+### OpenAPI document (Development only)
+GET {{host}}/openapi/v1.json

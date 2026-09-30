@@ -30,4 +30,4 @@ Status: **Planned** → **Implemented** (the code exists) → **Verified** (auto
 | HC2 | Table of Date, Route, Supplier, Price, Response time; sortable; paged | History feature (table, pagination) | Frontend: sort/pagination tests; E2E scenario 6 | Planned |
 | SUB1 | Two projects, one command each, no special setup | `pricehunt-backend/run.ps1`, `pricehunt-frontend/run.ps1` | Clean-clone check | Planned |
 | SUB2 | README: run, streaming, database, decisions, improvements, AI usage | `README.md` | Review | Planned |
-| SUB3 | .NET 8+ and Angular 17+ | .NET 10, Angular 22 | Build | Planned |
+| SUB3 | .NET 8+ and Angular 17+ | .NET 10 (`net10.0`, `pricehunt-backend/Directory.Build.props`); Angular 22 | Backend build: 0 warnings | Implemented (backend) |

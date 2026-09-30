@@ -1,3 +1,21 @@
 <Solution>
-  <Project Path="PriceHunt.Api/PriceHunt.Api.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="run.ps1" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/PriceHunt.Api/PriceHunt.Api.csproj" />
+    <Project Path="src/PriceHunt.Application/PriceHunt.Application.csproj" />
+    <Project Path="src/PriceHunt.Domain/PriceHunt.Domain.csproj" />
+    <Project Path="src/PriceHunt.Infrastructure/PriceHunt.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <Project Path="tests/PriceHunt.Api.Tests/PriceHunt.Api.Tests.csproj" />
+    <Project Path="tests/PriceHunt.Application.Tests/PriceHunt.Application.Tests.csproj" />
+    <Project Path="tests/PriceHunt.ArchitectureTests/PriceHunt.ArchitectureTests.csproj" />
+    <Project Path="tests/PriceHunt.Domain.Tests/PriceHunt.Domain.Tests.csproj" />
+    <Project Path="tests/PriceHunt.Infrastructure.Tests/PriceHunt.Infrastructure.Tests.csproj" />
+  </Folder>
 </Solution>

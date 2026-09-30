@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+
+  <!-- Composition root: Infrastructure is referenced only to register its services. -->
+  <ItemGroup>
+    <ProjectReference Include="..\PriceHunt.Application\PriceHunt.Application.csproj" />
+    <ProjectReference Include="..\PriceHunt.Infrastructure\PriceHunt.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

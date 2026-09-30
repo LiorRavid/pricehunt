@@ -22,5 +22,146 @@ trim_trailing_whitespace = false
 end_of_line = crlf
 indent_size = 4
 
+[*.{csproj,props,targets,slnx,runsettings,xml}]
+indent_size = 2
+
+# ---------------------------------------------------------------------------
+# C# conventions (Microsoft coding conventions and identifier names).
+# Severity "warning" + TreatWarningsAsErrors + EnforceCodeStyleInBuild = build error.
+# ---------------------------------------------------------------------------
 [*.cs]
 indent_size = 4
+
+# Namespaces and using directives
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0065.severity = warning
+dotnet_diagnostic.IDE0161.severity = warning
+
+# 'var' only when the type is apparent from the right-hand side
+csharp_style_var_for_built_in_types = false:warning
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_elsewhere = false:warning
+dotnet_diagnostic.IDE0007.severity = warning
+dotnet_diagnostic.IDE0008.severity = warning
+
+# Language keywords instead of framework type names
+dotnet_style_predefined_type_for_locals_parameters_members = true:warning
+dotnet_style_predefined_type_for_member_access = true:warning
+dotnet_diagnostic.IDE0049.severity = warning
+
+# Braces, using declarations, modern constructs
+csharp_prefer_braces = true:warning
+dotnet_diagnostic.IDE0011.severity = warning
+csharp_prefer_simple_using_statement = true:warning
+dotnet_diagnostic.IDE0063.severity = warning
+dotnet_style_prefer_collection_expression = when_types_loosely_match:warning
+dotnet_diagnostic.IDE0028.severity = warning
+dotnet_diagnostic.IDE0300.severity = warning
+dotnet_diagnostic.IDE0301.severity = warning
+dotnet_diagnostic.IDE0303.severity = warning
+dotnet_diagnostic.IDE0305.severity = warning
+csharp_style_prefer_primary_constructors = true:warning
+dotnet_diagnostic.IDE0290.severity = warning
+dotnet_style_readonly_field = true:warning
+dotnet_diagnostic.IDE0044.severity = warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+dotnet_diagnostic.IDE0040.severity = warning
+dotnet_code_quality_unused_parameters = all:warning
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning
+csharp_style_expression_bodied_methods = when_on_single_line:silent
+csharp_style_expression_bodied_properties = true:silent
+
+# Layout: Allman braces, one statement per line, operators at the start of wrapped lines
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = true
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+dotnet_style_operator_placement_when_wrapping = beginning_of_line
+
+# Naming
+dotnet_diagnostic.IDE1006.severity = warning
+
+dotnet_naming_rule.interfaces_begin_with_i.symbols = interfaces
+dotnet_naming_rule.interfaces_begin_with_i.style = prefix_i
+dotnet_naming_rule.interfaces_begin_with_i.severity = warning
+
+dotnet_naming_rule.type_parameters_begin_with_t.symbols = type_parameters
+dotnet_naming_rule.type_parameters_begin_with_t.style = prefix_t
+dotnet_naming_rule.type_parameters_begin_with_t.severity = warning
+
+dotnet_naming_rule.async_methods_end_with_async.symbols = async_methods
+dotnet_naming_rule.async_methods_end_with_async.style = suffix_async
+dotnet_naming_rule.async_methods_end_with_async.severity = warning
+
+dotnet_naming_rule.constants_are_pascal_case.symbols = constants
+dotnet_naming_rule.constants_are_pascal_case.style = pascal_case
+dotnet_naming_rule.constants_are_pascal_case.severity = warning
+
+dotnet_naming_rule.private_static_fields_begin_with_s.symbols = private_static_fields
+dotnet_naming_rule.private_static_fields_begin_with_s.style = prefix_s_camel
+dotnet_naming_rule.private_static_fields_begin_with_s.severity = warning
+
+dotnet_naming_rule.private_fields_begin_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_begin_with_underscore.style = prefix_underscore_camel
+dotnet_naming_rule.private_fields_begin_with_underscore.severity = warning
+
+dotnet_naming_rule.parameters_and_locals_are_camel_case.symbols = parameters_and_locals
+dotnet_naming_rule.parameters_and_locals_are_camel_case.style = camel_case
+dotnet_naming_rule.parameters_and_locals_are_camel_case.severity = warning
+
+dotnet_naming_rule.types_and_members_are_pascal_case.symbols = types_and_members
+dotnet_naming_rule.types_and_members_are_pascal_case.style = pascal_case
+dotnet_naming_rule.types_and_members_are_pascal_case.severity = warning
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_symbols.type_parameters.applicable_kinds = type_parameter
+dotnet_naming_symbols.async_methods.applicable_kinds = method, local_function
+dotnet_naming_symbols.async_methods.required_modifiers = async
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.required_modifiers = const
+dotnet_naming_symbols.private_static_fields.applicable_kinds = field
+dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private, internal, private_protected
+dotnet_naming_symbols.private_static_fields.required_modifiers = static
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private, internal, private_protected
+dotnet_naming_symbols.parameters_and_locals.applicable_kinds = parameter, local, local_function
+dotnet_naming_symbols.types_and_members.applicable_kinds = namespace, class, struct, enum, delegate, method, property, event, field
+
+dotnet_naming_style.prefix_i.required_prefix = I
+dotnet_naming_style.prefix_i.capitalization = pascal_case
+dotnet_naming_style.prefix_t.required_prefix = T
+dotnet_naming_style.prefix_t.capitalization = pascal_case
+dotnet_naming_style.suffix_async.required_suffix = Async
+dotnet_naming_style.suffix_async.capitalization = pascal_case
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.camel_case.capitalization = camel_case
+dotnet_naming_style.prefix_s_camel.required_prefix = s_
+dotnet_naming_style.prefix_s_camel.capitalization = camel_case
+dotnet_naming_style.prefix_underscore_camel.required_prefix = _
+dotnet_naming_style.prefix_underscore_camel.capitalization = camel_case
+
+# EF Core migrations are generated code.
+[**/Migrations/*.cs]
+generated_code = true
+
+# Test names read as behaviour sentences (underscores, no "Async" suffix: the test runner is
+# the only caller), and xUnit needs public test classes.
+[pricehunt-backend/tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1515.severity = none
+dotnet_naming_rule.async_methods_end_with_async.severity = none
