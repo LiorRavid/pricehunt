@@ -1,7 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PriceHunt.Infrastructure\PriceHunt.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- The API's real configuration, so a test proves what ships (S1-S4). -->
+  <ItemGroup>
+    <None Include="..\..\src\PriceHunt.Api\appsettings.json" Link="shipped-appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

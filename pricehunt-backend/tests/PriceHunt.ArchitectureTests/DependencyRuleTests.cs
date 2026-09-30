@@ -52,8 +52,7 @@ public sealed class DependencyRuleTests
             .AndShould().NotDependOnAny(s_entityFrameworkCore)
             .AndShould().NotDependOnAny(s_aspNetCore)
             .AndShould().NotDependOnAny(s_microsoftExtensions)
-            .Because("the domain model references nothing")
-            .WithoutRequiringPositiveResults();
+            .Because("the domain model references nothing");
 
         rule.Check(s_architecture);
     }
@@ -66,8 +65,7 @@ public sealed class DependencyRuleTests
             .AndShould().NotDependOnAny(s_apiLayer)
             .AndShould().NotDependOnAny(s_entityFrameworkCore)
             .AndShould().NotDependOnAny(s_aspNetCore)
-            .Because("Application defines ports that Infrastructure implements")
-            .WithoutRequiringPositiveResults();
+            .Because("Application defines ports that Infrastructure implements");
 
         rule.Check(s_architecture);
     }
@@ -78,8 +76,7 @@ public sealed class DependencyRuleTests
         IArchRule rule = Types().That().ResideInAssembly(s_infrastructureAssembly)
             .Should().NotDependOnAny(s_apiLayer)
             .AndShould().NotDependOnAny(s_aspNetCore)
-            .Because("only the Api layer knows HTTP")
-            .WithoutRequiringPositiveResults();
+            .Because("only the Api layer knows HTTP");
 
         rule.Check(s_architecture);
     }
@@ -88,7 +85,7 @@ public sealed class DependencyRuleTests
     public void Api_uses_infrastructure_only_from_the_composition_root()
     {
         IArchRule rule = Types().That().ResideInAssembly(s_apiAssembly)
-            .And().DoNotHaveFullNameMatching(@"^Program(\+.*)?$")
+            .And().DoNotHaveFullNameMatching(@"^Program([+/].*)?$")
             .Should().NotDependOnAny(s_infrastructureLayer)
             .Because("endpoints talk to Application ports; Infrastructure is referenced only to register services");
 

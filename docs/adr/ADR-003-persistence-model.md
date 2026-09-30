@@ -36,10 +36,15 @@ EF Core's SQLite provider **can't translate comparisons or `ORDER BY` on `decima
 **Indexes** cover every history filter and sort column:
 
 - `SupplierResponses`: `ReceivedAt`, (`SupplierId`, `ReceivedAt`), (`Outcome`, `ReceivedAt`), `PriceMinorUnits` and `ResponseTimeMs`.
-- `Searches`: `OriginNormalized` and `DestinationNormalized`.
+- `Searches`: `OriginNormalized`, `DestinationNormalized`, and `Status`, which the startup recovery uses to find searches left `Running`.
 - `Suppliers`: `Name`.
+- `SearchSuppliers`: `SupplierId`, for the foreign key.
 
-**Mapping style.** The Domain has no EF attributes. Infrastructure has its own persistence entities, each with an explicit `IEntityTypeConfiguration`, and maps to and from the domain explicitly. History reads use `AsNoTracking` projections straight to DTOs.
+**Mapping style.**
+- The Domain has no EF attributes. Infrastructure has its own persistence entities, each with an explicit `IEntityTypeConfiguration`, and maps to and from the domain explicitly (`PersistenceMapping`).
+- History reads use `AsNoTracking` projections straight to DTOs.
+- The `DbContext` is `internal`, so the API can only reach the data through Application ports.
+- A design-time factory lets `dotnet ef migrations add` run from the Infrastructure project alone.
 
 **Lifecycle.**
 

@@ -1,10 +1,8 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace PriceHunt.Api.Tests;
 
-public sealed class HealthAndErrorTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthAndErrorTests(PriceHuntApiFactory factory) : IClassFixture<PriceHuntApiFactory>
 {
     [Fact]
     public async Task Health_endpoint_reports_healthy()
