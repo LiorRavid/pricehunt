@@ -35,7 +35,7 @@ describe('HistoryPagination [HC2]', () => {
 
     expect(text()).toContain('Showing 21–40 of 312');
     expect(text()).toContain('Page 2 of 16');
-    expect(element.querySelector('p')?.getAttribute('aria-live')).toBe('polite');
+    expect(element.querySelector('p')?.getAttribute('role')).toBe('status');
   });
 
   it('moves to the first, previous, next and last page', async () => {

@@ -18,7 +18,10 @@ test('invalid input blocks the search and says why next to the field [P1][CL1]',
   await screen.origin.fill('Haifa');
   await screen.destination.fill(' haifa ');
   await screen.destination.blur();
-  await expect(page.getByText('The destination must differ from the origin.')).toBeVisible();
+  // The message is shown and tied to the field, so a screen reader reads it with the field.
+  await expect(screen.destination).toHaveAccessibleDescription(
+    'The destination must differ from the origin.',
+  );
   await expect(screen.destination).toHaveAttribute('aria-invalid', 'true');
   await expect(screen.searchButton).toBeDisabled();
   // Enter in a field doesn't get round the rules either.
@@ -31,13 +34,15 @@ test('invalid input blocks the search and says why next to the field [P1][CL1]',
   const shipByValue = await shipBy.inputValue();
   await shipBy.fill('2020-01-01');
   await shipBy.blur();
-  await expect(page.getByText("The end date can't be before the start date.")).toBeVisible();
+  await expect(shipBy).toHaveAccessibleDescription("The end date can't be before the start date.");
   await expect(screen.searchButton).toBeDisabled();
   await shipBy.fill(shipByValue);
   await expect(screen.searchButton).toBeEnabled();
 
   await page.getByRole('button', { name: 'Select none' }).click();
-  await expect(page.getByText('Select at least one supplier.')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Suppliers' })).toHaveAccessibleDescription(
+    'Select at least one supplier.',
+  );
   await expect(screen.searchButton).toBeDisabled();
 
   expect(searches).toBe(0);

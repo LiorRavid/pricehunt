@@ -46,7 +46,7 @@ export class HistoryScreen {
     await action();
     await response;
     await expect(this.table).toHaveAttribute('aria-busy', 'false');
-    await expect(this.pagination.getByText(/Showing|No results/)).toBeVisible();
+    await expect(this.pagination.getByRole('status')).toHaveText(/Showing|No results/);
   }
 
   header(label: string): Locator {
@@ -58,7 +58,7 @@ export class HistoryScreen {
   }
 
   async showing(): Promise<string> {
-    return this.pagination.getByText(/Showing|No results/).innerText();
+    return this.pagination.getByRole('status').innerText();
   }
 
   /** The body rows, in the order they're shown. */

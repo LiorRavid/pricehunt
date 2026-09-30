@@ -2,7 +2,7 @@
   aria-label="Pagination"
   class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-sm text-slate-600"
 >
-  <p aria-live="polite">
+  <p role="status">
     @if (summary().firstItem > 0) {
       Showing {{ summary().firstItem }}–{{ summary().lastItem }} of {{ summary().totalCount }}
     } @else {
