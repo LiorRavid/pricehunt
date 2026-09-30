@@ -1,24 +1,25 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-    })
-      .compileComponents();
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([])] });
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render title', async () => {
+  it('shows the main navigation with links to both screens', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('PriceHunt');
+
+    const nav = (fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Main"]');
+    const links = Array.from(nav?.querySelectorAll('a') ?? [], (link) => [
+      link.textContent.trim(),
+      link.getAttribute('href'),
+    ]);
+    expect(links).toEqual([
+      ['PriceHunt', '/search'],
+      ['Search', '/search'],
+      ['History', '/history'],
+    ]);
   });
 });

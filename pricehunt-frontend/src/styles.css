@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
+
+/* Design tokens: a neutral (slate) palette, one accent (teal), one spacing scale. */
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --color-accent-50: var(--color-teal-50);
+  --color-accent-100: var(--color-teal-100);
+  --color-accent-600: var(--color-teal-600);
+  --color-accent-700: var(--color-teal-700);
+  --color-accent-800: var(--color-teal-800);
+
+  --radius-card: 0.75rem;
+
+  /* Height of one live-results row; rows move by multiples of it. */
+  --spacing-result-row: 4.5rem;
+}
+
+@layer base {
+  html {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent-600;
+  }
+}

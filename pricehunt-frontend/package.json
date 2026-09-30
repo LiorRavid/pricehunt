@@ -6,9 +6,17 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test --watch=false",
+    "test:watch": "ng test",
+    "test:coverage": "ng test --watch=false --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "private": true,
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
   "packageManager": "npm@11.19.0",
   "dependencies": {
     "@angular/common": "^22.2.0",
@@ -24,9 +32,20 @@
     "@angular/build": "^22.2.0",
     "@angular/cli": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@vitest/coverage-v8": "^5.0.3",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-boundaries": "^7.2.0",
     "jsdom": "^30.0.0",
+    "postcss": "^8.5.28",
     "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vitest": "^5.0.0"
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
   }
 }

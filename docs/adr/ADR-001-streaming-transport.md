@@ -46,4 +46,7 @@ A cancelled search emits nothing further, because nobody is listening any more. 
 - A validation error is a plain `400` response. Once the stream has started the status code can't change, so later failures travel as a terminal `search-completed` with status `Faulted`.
 - There is no automatic resume. If the connection drops before the terminal event, the client reports "connection lost" and the user can search again. That's acceptable for a six-second search.
 - The browser allows about six HTTP/1.1 connections per origin. The UI keeps at most one search stream open per tab, and the previous one is aborted first.
-- The Angular dev-server proxy must stream events one at a time and pass client aborts through. This is verified in Phase 5. If it fails, the fallback is a narrowly scoped CORS policy (origin `http://localhost:4200`, `POST /api/searches` only) with the client calling the API directly.
+- The Angular dev-server proxy must stream events one at a time and pass client aborts through. **Verified in Phase 5**, with a `fetch` through `http://localhost:4200/api/searches` run in Chrome via DevTools MCP:
+  - Events arrived at 284 ms, 1.94 s, 2.12 s, 2.35 s, 3.56 s, 3.90 s and 4.18 s, and the search completed at 6.10 s.
+  - Aborting right after `search-started` made the API log "Search cancelled by the client; cancelled supplier calls: 7" 11 ms later, and the database recorded the search and all 7 responses as `Cancelled`.
+  - No CORS fallback is needed.
