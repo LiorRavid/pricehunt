@@ -336,29 +336,34 @@ curl -N -X POST http://localhost:5080/api/searches -H 'Content-Type: application
   -d '{"origin":"Haifa","destination":"Rotterdam","fromDate":"2026-10-01","toDate":"2026-10-08"}'
 ```
 
-`-N` turns off curl's buffering, so each event prints as it arrives:
+`-N` turns off curl's buffering, so each event prints as it arrives. A real run, shortened:
 
 ```text
 event: search-started
-data: {"searchId":"01a0f2c8-…","suppliers":[{"id":"albatross-freight","name":"Albatross Freight"},…],"startedAt":"…Z","deadline":"…Z","maxDurationMs":6000}
+data: {"suppliers":[{"id":"albatross-freight","name":"Albatross Freight"},…],"startedAt":"2026-09-30T16:58:04.3029403Z","deadline":"2026-09-30T16:58:10.3029403Z","maxDurationMs":6000,"searchId":"01a0f340-7a8e-70cc-bed4-fe802ed17e81"}
 id: 1
 
 event: quote-received
-data: {"searchId":"01a0f2c8-…","supplierId":"emberline-logistics","price":{"amount":1339.53,"currency":"USD"},"responseTimeMs":612,"receivedAt":"…Z"}
+data: {"supplierId":"emberline-logistics","price":{"amount":1895.71,"currency":"USD"},"responseTimeMs":1570,"receivedAt":"2026-09-30T16:58:05.9987945Z","searchId":"01a0f340-7a8e-70cc-bed4-fe802ed17e81"}
 id: 2
 
 …
 
 event: search-completed
-data: {"searchId":"01a0f2c8-…","status":"TimedOut","completedAt":"…Z","respondedCount":6,"succeededCount":5,"failedCount":1,"noResponseSupplierIds":["gullwing-transport"]}
+data: {"status":"TimedOut","completedAt":"2026-09-30T16:58:10.3099595Z","respondedCount":6,"succeededCount":6,"failedCount":0,"noResponseSupplierIds":["gullwing-transport"],"searchId":"01a0f340-7a8e-70cc-bed4-fe802ed17e81"}
 id: 8
 ```
 
-Invalid input gets a `400` before any streaming starts, as a [problem details](https://www.rfc-editor.org/rfc/rfc9457) response with an error per field:
+Invalid input gets a `400` before any streaming starts, as a [problem details](https://www.rfc-editor.org/rfc/rfc9457) response (`application/problem+json`) with an error per field:
 
 ```json
-{ "title": "One or more validation errors occurred.", "status": 400,
-  "errors": { "destination": ["The destination must differ from the origin."] } }
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": { "destination": ["The destination must differ from the origin."] },
+  "traceId": "00-5944c114bc6de4c638b4c2aeee12075b-2190f7b9462c8ff5-00"
+}
 ```
 
 **`GET /api/history`**: supplier responses, filtered, sorted and paged by the database.
@@ -377,7 +382,7 @@ Invalid input gets a `400` before any streaming starts, as a [problem details](h
 curl.exe "http://localhost:5080/api/history?suppliers=albatross-freight&sortBy=price&sortDirection=asc&pageSize=5"
 ```
 
-The answer is `{ "items": [...], "page": 1, "pageSize": 5, "totalCount": 42 }`. Each item has `id`, `searchId`, `receivedAt`, `origin`, `destination`, `shipDateFrom`, `shipDateTo`, `supplierId`, `supplierName`, `outcome`, `price` (or null), `responseTimeMs` and `errorCode`.
+The answer is `{ "items": [...], "page": 1, "pageSize": 5, "totalCount": 1 }`. Each item has `id`, `searchId`, `receivedAt`, `origin`, `destination`, `shipDateFrom`, `shipDateTo`, `supplierId`, `supplierName`, `outcome`, `price` (or null), `responseTimeMs` and `errorCode`.
 
 ## 8. Design decisions and trade-offs
 
