@@ -31,7 +31,8 @@
       (sortChange)="store.sortBy($event)"
       (retry)="retry()"
     />
-    @if (!store.errorMessage()) {
+    <!-- Only once a page has loaded: nothing sits below the table while its first rows arrive. -->
+    @if (!store.errorMessage() && store.page()) {
       <ph-history-pagination
         [summary]="store.summary()"
         [pageSize]="store.query().pageSize"

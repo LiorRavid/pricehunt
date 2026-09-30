@@ -11,3 +11,8 @@
     transform: scaleX(1);
   }
 }
+
+/* The chips stay on one line; any that don't fit fade out at the edge instead of wrapping. */
+.pending-suppliers {
+  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
+}

@@ -42,6 +42,11 @@ A Cancel button moves the store to `cancelled`. Leaving the search page cancels 
 - Chips for the pending suppliers, tracked by supplier id. Tracking the name strings by identity made Angular warn (`NG0956`) whenever a new search replaced every chip.
 - A deadline bar animated with `transform: scaleX` over the server's `maxDurationMs`, timed from when `search-started` arrives. Timing from arrival makes clock differences between client and server irrelevant.
 - The final badge (Completed, Timed out naming the silent suppliers, Cancelled or Error) sits in a `role="status"` region that is always present, so screen readers announce it.
+- **The panel keeps one height from the start of a search to its end,** because anything above the list that changes height moves the whole list:
+  - The count takes a single line.
+  - The deadline bar's track stays in place after the search.
+  - The chips and, later, the badge share one fixed-height line. The chips stay on that line, fading out at the edge if there are too many, and a long badge detail is truncated, with the full text in its tooltip and in the announcement.
+  - The Search and Cancel buttons are the same height, so the button row doesn't grow when Cancel appears.
 
 ## Alternatives considered
 
@@ -58,4 +63,8 @@ A Cancel button moves the store to `cancelled`. Leaving the search page cancels 
   - All 234 samples of the rendered prices were in ascending DOM order.
   - The 19 animations were additive, transform-only and 300 ms long, and the list height stayed at 504 px throughout.
   - With reduced motion emulated there were no animations.
-  - A performance trace for layout shift and long tasks is part of Phase 8.
+- Phase 8 measured layout stability with performance traces:
+  - The first trace of a live search showed **CLS 0.18**. The pending chips wrapped onto fewer lines as suppliers answered, and the list below moved with them. The end-to-end suite now checks that the list keeps its position and height for a whole search. That check fails on the old layout, where the list sat at four different heights.
+  - After the fix, two searches in a row gave CLS 0.01. What remains is the pending chips sliding left as each one disappears. The rows never move except by transform.
+  - At 4× CPU slowdown on Fast 3G: CLS 0.00, INP 173 ms, no long tasks, and the list was sorted after every DOM change.
+- The history screen had CLS 0.57 on load: pagination showed "No results" under a five-row skeleton, then the first 20 rows pushed it down. Pagination now appears with the first page. The vertical scrollbar also nudged the centred page sideways when it appeared, so `html` reserves its space (`scrollbar-gutter: stable`). Load CLS is now 0.003.

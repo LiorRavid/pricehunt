@@ -1,48 +1,59 @@
-<section aria-label="Search progress" class="space-y-3">
+<!-- The panel keeps one height from the start of a search to its end, so the results never move. -->
+<section aria-label="Search progress" class="space-y-2">
   @if (searching() || badge()) {
-    <p class="text-sm font-medium text-slate-700">
+    <p class="truncate text-sm font-medium text-slate-700">
       {{ progress().responded }} of {{ progress().total }} suppliers responded
       @if (progress().failed > 0) {
         <span class="text-slate-500">· {{ progress().failed }} failed</span>
       }
     </p>
+
+    <div
+      aria-hidden="true"
+      class="h-1 overflow-hidden rounded-full bg-slate-200 motion-reduce:invisible"
+    >
+      @if (searching()) {
+        @if (maxDurationMs(); as duration) {
+          <div
+            class="deadline-bar h-full origin-left bg-accent-600"
+            [style.animation-duration.ms]="duration"
+          ></div>
+        }
+      }
+    </div>
   }
 
-  @if (searching()) {
-    @if (maxDurationMs(); as duration) {
-      <div
-        aria-hidden="true"
-        class="h-1 overflow-hidden rounded-full bg-slate-200 motion-reduce:hidden"
-      >
-        <div
-          class="deadline-bar h-full origin-left bg-accent-600"
-          [style.animation-duration.ms]="duration"
-        ></div>
-      </div>
-    }
-    @if (progress().pending.length > 0) {
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs text-slate-500">Waiting for</span>
-        <ul role="list" aria-label="Suppliers still pending" class="flex flex-wrap gap-2">
+  <!-- One line, shared by the suppliers still pending and then the outcome. -->
+  <div class="flex h-8 min-w-0 items-center">
+    @if (searching() && progress().pending.length > 0) {
+      <div class="flex min-w-0 flex-1 items-center gap-2">
+        <span class="shrink-0 text-xs text-slate-500">Waiting for</span>
+        <ul
+          role="list"
+          aria-label="Suppliers still pending"
+          class="pending-suppliers flex min-w-0 flex-1 gap-2 overflow-hidden"
+        >
           @for (supplier of progress().pending; track supplier.id) {
-            <li class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+            <li
+              class="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs whitespace-nowrap text-slate-600"
+            >
               {{ supplier.name }}
             </li>
           }
         </ul>
       </div>
     }
-  }
 
-  <div role="status" aria-live="polite">
-    @if (badge(); as final) {
-      <p
-        class="inline-flex flex-wrap items-center gap-x-2 rounded-full px-3 py-1 text-sm ring-1"
-        [class]="badgeClasses[final.kind]"
-      >
-        <strong class="font-semibold">{{ final.title }}</strong>
-        <span>{{ final.detail }}</span>
-      </p>
-    }
+    <div role="status" aria-live="polite" class="flex min-w-0">
+      @if (badge(); as final) {
+        <p
+          class="inline-flex max-w-full items-center gap-x-2 rounded-full px-3 py-1 text-sm ring-1"
+          [class]="badgeClasses[final.kind]"
+        >
+          <strong class="shrink-0 font-semibold">{{ final.title }}</strong>
+          <span class="truncate" [title]="final.detail">{{ final.detail }}</span>
+        </p>
+      }
+    </div>
   </div>
 </section>

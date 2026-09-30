@@ -41,7 +41,14 @@ export default defineConfig([
       angular.configs.tsRecommended,
     ],
     languageOptions: {
-      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+      parserOptions: {
+        // e2e/ has its own tsconfig.json; the Playwright config sits beside the workspace ones.
+        projectService: {
+          allowDefaultProject: ['playwright.config.ts'],
+          defaultProject: 'e2e/tsconfig.json',
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     processor: angular.processInlineTemplates,
     rules: {

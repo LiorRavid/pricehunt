@@ -22,6 +22,8 @@
   html {
     @apply bg-slate-50 text-slate-900 antialiased;
     font-family: var(--font-sans);
+    /* Room for the scrollbar from the start, so the centred page doesn't shift when one appears. */
+    scrollbar-gutter: stable;
   }
 
   :focus-visible {

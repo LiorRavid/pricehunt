@@ -13,11 +13,9 @@
     </button>
   </div>
 } @else {
-  <div
-    class="overflow-x-auto rounded-card border border-slate-200 bg-white"
-    [attr.aria-busy]="loading()"
-  >
-    <table class="w-full text-left text-sm">
+  <!-- Positioned, so the visually hidden labels scroll with the table instead of widening the page. -->
+  <div class="relative overflow-x-auto rounded-card border border-slate-200 bg-white">
+    <table class="w-full text-left text-sm" [attr.aria-busy]="loading()">
       <caption class="sr-only">
         Price history
       </caption>
@@ -63,7 +61,7 @@
               [class.text-slate-500]="item.outcome !== 'Succeeded'"
             >
               <td class="px-4 py-3 whitespace-nowrap">{{ formatDateTime(item.receivedAt) }}</td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3 whitespace-nowrap">
                 <span class="block font-medium">
                   {{ item.origin }} <span aria-hidden="true">→</span><span class="sr-only">to</span>
                   {{ item.destination }}
@@ -72,7 +70,7 @@
                   Ships {{ formatDateRange(item.shipDateFrom, item.shipDateTo) }}
                 </span>
               </td>
-              <td class="px-4 py-3">{{ item.supplierName }}</td>
+              <td class="px-4 py-3 whitespace-nowrap">{{ item.supplierName }}</td>
               <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">
                 @if (item.price; as price) {
                   {{ formatMoney(price.amount, price.currency) }}
