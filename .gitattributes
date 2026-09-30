@@ -1,0 +1,12 @@
+# LF in the repository and in every working tree...
+* text=auto eol=lf
+
+# ...except PowerShell scripts, which Windows PowerShell 5.1 expects with CRLF.
+*.ps1 text eol=crlf
+
+# Binary assets.
+*.ico binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.woff2 binary

@@ -481,10 +481,16 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# SQLite database files (the API creates pricehunt.db on first run)
+# SQLite database files (the API creates App_Data/pricehunt.db on first run)
 *.db
 *.db-shm
 *.db-wal
+App_Data/
+
+# Test, coverage and end-to-end reports
+coverage/
+playwright-report/
+blob-report/
 
 # Playwright MCP snapshots, console logs and screenshots
 .playwright-mcp/
