@@ -37,12 +37,11 @@ Four implementation traps shape the design:
    - Persist it.
    - Then emit `quote-received` or `supplier-failed`. Persisting first means anything the client saw is in the history.
    - Interrupted calls produce no event.
-6. **Finalise once.** When every call has settled, the status depends on **which token fired**, not on the exception:
-   - Caller's token cancelled → `Cancelled`, and nothing more is emitted, because nobody is listening.
-   - Deadline fired → `TimedOut`.
-   - Otherwise → `Completed`.
+6. **Finalise once.** When every call has settled:
+   - If every selected supplier answered (success or failure), the search is `Completed`, even if a token fired at the same moment.
+   - Otherwise the status depends on **which token fired**, not on the exception type: caller's token → `Cancelled`, deadline → `TimedOut`.
 
-   Pending suppliers are recorded as `TimedOut` or `Cancelled` responses. The status, completion time and those responses are saved in one transaction. The terminal `search-completed` event is emitted **exactly once**, unless the search was cancelled.
+   Pending suppliers are recorded as `TimedOut` or `Cancelled` responses. The status, completion time and those responses are saved in one transaction. The terminal `search-completed` event is emitted **exactly once**, but not after a caller cancellation, when nobody is listening.
 7. **Faults.** An unexpected error mid-stream, such as a database failure, is logged. `Faulted` is persisted on a best-effort basis, and a terminal `search-completed` event with status `Faulted` is emitted.
 8. **Early stop.** If the consumer stops enumerating, `SearchRun.DisposeAsync` cancels outstanding calls. It then finalises the search as `Cancelled` if that hasn't already happened. This covers a disconnect while a result is being written.
 
@@ -64,6 +63,9 @@ At startup, any search left `Running` by a crash is closed as `Cancelled`, using
 
 ## Consequences
 
-- The search never runs past `MaxDuration`, even with a supplier that ignores cancellation. Such a supplier's task finishes in the background and is never observed.
+- The search never runs past `MaxDuration`, even with a supplier that ignores cancellation. Such a supplier's task finishes in the background. A continuation observes its eventual failure so it isn't reported as an unobserved task exception.
+- The deadline is armed for `CreatedAt + MaxDuration` minus the time the initial write took, so the budget starts when the search starts.
 - Every selected supplier ends up with exactly one recorded outcome. The domain enforces this, and so does a unique index on (search id, supplier id).
-- Tests are deterministic, using `FakeTimeProvider` for time and `TaskCompletionSource` fakes that let each test decide when every supplier completes.
+- Tests are deterministic, using `FakeTimeProvider` for time and `TaskCompletionSource` fakes that let each test decide when every supplier completes. Mutation checks confirmed that two tests guard the key guarantees:
+  - Removing `WaitAsync` makes "the deadline holds even when a supplier ignores cancellation" fail.
+  - Finalising with the caller's token makes "caller cancellation … ends cancelled" fail.
