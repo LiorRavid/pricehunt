@@ -10,7 +10,7 @@ internal static partial class SearchLog
 
     public static IDisposable? BeginSearchScope(ILogger logger, Guid searchId) => s_searchScope(logger, searchId);
 
-    [LoggerMessage(EventId = 1000, Level = LogLevel.Information, Message = "Search started with {SupplierCount} suppliers; deadline {Deadline:O}")]
+    [LoggerMessage(EventId = 1000, Level = LogLevel.Information, Message = "Search started; suppliers: {SupplierCount}, deadline {Deadline:O}")]
     public static partial void SearchStarted(ILogger logger, int supplierCount, DateTime deadline);
 
     [LoggerMessage(EventId = 1001, Level = LogLevel.Information, Message = "Quote from {SupplierId}: {Amount} {Currency} after {ElapsedMs} ms")]
@@ -25,10 +25,10 @@ internal static partial class SearchLog
     [LoggerMessage(EventId = 1004, Level = LogLevel.Information, Message = "Search completed: every supplier responded")]
     public static partial void SearchCompleted(ILogger logger);
 
-    [LoggerMessage(EventId = 1005, Level = LogLevel.Information, Message = "Search reached its deadline; {NoResponseCount} suppliers did not respond")]
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Information, Message = "Search reached its deadline; suppliers without a response: {NoResponseCount}")]
     public static partial void SearchTimedOut(ILogger logger, int noResponseCount);
 
-    [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Search cancelled by the client; {PendingCount} supplier calls cancelled")]
+    [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Search cancelled by the client; cancelled supplier calls: {PendingCount}")]
     public static partial void SearchCancelled(ILogger logger, int pendingCount);
 
     [LoggerMessage(EventId = 1007, Level = LogLevel.Error, Message = "Search faulted")]
@@ -37,6 +37,6 @@ internal static partial class SearchLog
     [LoggerMessage(EventId = 1008, Level = LogLevel.Error, Message = "The final state of the search could not be persisted")]
     public static partial void FinalisationFailed(ILogger logger, Exception exception);
 
-    [LoggerMessage(EventId = 1009, Level = LogLevel.Warning, Message = "Closed {Count} searches left running by an earlier shutdown as cancelled")]
+    [LoggerMessage(EventId = 1009, Level = LogLevel.Warning, Message = "Closed searches left running by an earlier shutdown as cancelled: {Count}")]
     public static partial void InterruptedSearchesRecovered(ILogger logger, int count);
 }

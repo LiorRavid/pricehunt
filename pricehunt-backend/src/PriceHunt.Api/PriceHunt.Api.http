@@ -3,5 +3,24 @@
 ### Liveness
 GET {{host}}/health
 
+### The supplier catalogue
+GET {{host}}/api/suppliers
+
+### Run a search (Server-Sent Events: search-started, quote-received / supplier-failed, search-completed)
+POST {{host}}/api/searches
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "origin": "Haifa",
+  "destination": "Rotterdam",
+  "fromDate": "2026-10-01",
+  "toDate": "2026-10-08",
+  "supplierIds": []
+}
+
+### Price history: filters, sorting and paging all run on the server
+GET {{host}}/api/history?suppliers=albatross-freight&suppliers=driftwood-shipping&includeFailures=true&sortBy=price&sortDirection=asc&page=1&pageSize=20
+
 ### OpenAPI document (Development only)
 GET {{host}}/openapi/v1.json

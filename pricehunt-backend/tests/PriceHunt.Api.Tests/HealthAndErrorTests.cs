@@ -36,6 +36,9 @@ public sealed class HealthAndErrorTests(PriceHuntApiFactory factory) : IClassFix
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         string document = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        document.Should().Contain("\"openapi\"");
+        document.Should().Contain("\"openapi\"")
+            .And.Contain("\"/api/searches\"")
+            .And.Contain("\"/api/history\"")
+            .And.Contain("\"/api/suppliers\"");
     }
 }

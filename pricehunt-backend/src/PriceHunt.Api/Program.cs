@@ -1,4 +1,8 @@
+using System.Text.Json.Serialization;
 using PriceHunt.Api.ErrorHandling;
+using PriceHunt.Api.History;
+using PriceHunt.Api.Searches;
+using PriceHunt.Api.Suppliers;
 using PriceHunt.Application;
 using PriceHunt.Application.Searches;
 using PriceHunt.Infrastructure;
@@ -7,6 +11,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 
@@ -31,5 +36,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHealthChecks("/health");
+app.MapSupplierEndpoints();
+app.MapSearchEndpoints();
+app.MapHistoryEndpoints();
 
 await app.RunAsync();

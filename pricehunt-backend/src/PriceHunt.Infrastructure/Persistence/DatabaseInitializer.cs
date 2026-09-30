@@ -56,7 +56,7 @@ internal sealed partial class DatabaseInitializer(
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Applied {Count} database migrations ({Migrations}) to {DatabasePath}")]
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Applied database migrations ({Count}): {Migrations} to {DatabasePath}")]
     private static partial void LogMigrationsApplied(ILogger logger, int count, string[] migrations, string databasePath);
 
     [LoggerMessage(EventId = 2001, Level = LogLevel.Information, Message = "Database schema is up to date at {DatabasePath}")]
