@@ -1,0 +1,13 @@
+/* Fills toward the deadline over the search's time budget; transform-only, so no layout work. */
+.deadline-bar {
+  transform: scaleX(0);
+  animation-name: deadline;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes deadline {
+  to {
+    transform: scaleX(1);
+  }
+}

@@ -16,7 +16,7 @@ The app uses Angular 22 with zoneless change detection and signals.
 
 **Cancellation and stale events, in three layers:**
 
-1. **Transport.** Searches run through RxJS `switchMap`. Starting a new search unsubscribes from the previous stream, and unsubscribing calls `AbortController.abort()`, which cancels the request and, through `RequestAborted`, the supplier calls.
+1. **Transport.** Searches run through RxJS `switchMap`. Starting a new search unsubscribes from the previous stream, and unsubscribing from a stream that hasn't finished calls `AbortController.abort()`, which cancels the request and, through `RequestAborted`, the supplier calls (ADR-001).
 2. **Attempt tag.** Every action the stream dispatches carries the client-side attempt number it belongs to. The reducer drops actions from any other attempt.
 3. **Search id and terminal state.** The reducer also drops events whose `searchId` isn't the active search, and anything that arrives after a terminal event.
 
@@ -39,7 +39,7 @@ A Cancel button moves the store to `cancelled`. Leaving the search page cancels 
 **Progress:**
 
 - "X of N suppliers responded". Failures count as responded, and failures also get their own count.
-- Chips for the pending suppliers.
+- Chips for the pending suppliers, tracked by supplier id. Tracking the name strings by identity made Angular warn (`NG0956`) whenever a new search replaced every chip.
 - A deadline bar animated with `transform: scaleX` over the server's `maxDurationMs`, timed from when `search-started` arrives. Timing from arrival makes clock differences between client and server irrelevant.
 - The final badge (Completed, Timed out naming the silent suppliers, Cancelled or Error) sits in a `role="status"` region that is always present, so screen readers announce it.
 
@@ -53,4 +53,9 @@ A Cancel button moves the store to `cancelled`. Leaving the search page cancels 
 ## Consequences
 
 - Every row has a fixed height, so long supplier names are truncated with a tooltip.
-- The "no flicker" claim is checked in a real browser (C2 checks 1–3): row elements stay the same objects, prices are always in ascending DOM order, and a performance trace shows no layout shift.
+- The "no flicker" claim is checked in a real browser (C2 checks 1–3). In Phase 6, during a live search with all seven suppliers:
+  - The seven rows marked at the start were still the same connected elements after the list had passed through six different orders.
+  - All 234 samples of the rendered prices were in ascending DOM order.
+  - The 19 animations were additive, transform-only and 300 ms long, and the list height stayed at 504 px throughout.
+  - With reduced motion emulated there were no animations.
+  - A performance trace for layout shift and long tasks is part of Phase 8.

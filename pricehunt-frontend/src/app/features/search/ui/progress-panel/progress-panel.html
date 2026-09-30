@@ -1,0 +1,48 @@
+<section aria-label="Search progress" class="space-y-3">
+  @if (searching() || badge()) {
+    <p class="text-sm font-medium text-slate-700">
+      {{ progress().responded }} of {{ progress().total }} suppliers responded
+      @if (progress().failed > 0) {
+        <span class="text-slate-500">· {{ progress().failed }} failed</span>
+      }
+    </p>
+  }
+
+  @if (searching()) {
+    @if (maxDurationMs(); as duration) {
+      <div
+        aria-hidden="true"
+        class="h-1 overflow-hidden rounded-full bg-slate-200 motion-reduce:hidden"
+      >
+        <div
+          class="deadline-bar h-full origin-left bg-accent-600"
+          [style.animation-duration.ms]="duration"
+        ></div>
+      </div>
+    }
+    @if (progress().pending.length > 0) {
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs text-slate-500">Waiting for</span>
+        <ul role="list" aria-label="Suppliers still pending" class="flex flex-wrap gap-2">
+          @for (supplier of progress().pending; track supplier.id) {
+            <li class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+              {{ supplier.name }}
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+
+  <div role="status" aria-live="polite">
+    @if (badge(); as final) {
+      <p
+        class="inline-flex flex-wrap items-center gap-x-2 rounded-full px-3 py-1 text-sm ring-1"
+        [class]="badgeClasses[final.kind]"
+      >
+        <strong class="font-semibold">{{ final.title }}</strong>
+        <span>{{ final.detail }}</span>
+      </p>
+    }
+  </div>
+</section>

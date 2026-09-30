@@ -88,6 +88,43 @@ describe('SseClient', () => {
     await flush();
     expect(received).toEqual(['first', 'done']);
     expect(completed).toBe(true);
+    fake.end();
+  });
+
+  it('lets a finished stream end on its own instead of aborting it', async () => {
+    const fake = new FakeFetch();
+    let completed = false;
+    setUp(fake)
+      .post('/api/searches', {}, isTerminal)
+      .subscribe({ complete: () => (completed = true) });
+
+    fake.write('event: done\ndata: 1\n\n');
+    await flush();
+    expect(completed).toBe(true);
+    expect(fake.signal?.aborted).toBe(false);
+
+    fake.end();
+    await flush();
+    expect(fake.signal?.aborted).toBe(false);
+  });
+
+  it('aborts a finished stream the server keeps open', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = new FakeFetch();
+      const onError = vi.fn();
+      setUp(fake).post('/api/searches', {}, isTerminal).subscribe({ error: onError });
+
+      fake.write('event: done\ndata: 1\n\n');
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(fake.signal?.aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(fake.signal?.aborted).toBe(true);
+      expect(onError).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('aborts the request when unsubscribed, without reporting an error', async () => {

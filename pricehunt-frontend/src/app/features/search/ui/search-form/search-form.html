@@ -1,0 +1,133 @@
+<form
+  novalidate
+  aria-label="Search shipping prices"
+  class="grid gap-4 rounded-card border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2"
+  (submit)="startSearch($event)"
+>
+  <div>
+    <label for="origin" class="block text-sm font-medium text-slate-700">From</label>
+    <input
+      id="origin"
+      type="text"
+      autocomplete="off"
+      placeholder="e.g. Haifa"
+      [formField]="searchForm.origin"
+      [attr.aria-invalid]="originError() ? 'true' : null"
+      [attr.aria-describedby]="originError() ? 'origin-error' : null"
+      class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 aria-invalid:border-rose-500"
+    />
+    @if (originError(); as message) {
+      <p id="origin-error" class="mt-1 text-sm text-rose-700">{{ message }}</p>
+    }
+  </div>
+
+  <div>
+    <label for="destination" class="block text-sm font-medium text-slate-700">To</label>
+    <input
+      id="destination"
+      type="text"
+      autocomplete="off"
+      placeholder="e.g. Rotterdam"
+      [formField]="searchForm.destination"
+      [attr.aria-invalid]="destinationError() ? 'true' : null"
+      [attr.aria-describedby]="destinationError() ? 'destination-error' : null"
+      class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 aria-invalid:border-rose-500"
+    />
+    @if (destinationError(); as message) {
+      <p id="destination-error" class="mt-1 text-sm text-rose-700">{{ message }}</p>
+    }
+  </div>
+
+  <div>
+    <label for="from-date" class="block text-sm font-medium text-slate-700">Ship from</label>
+    <input
+      id="from-date"
+      type="date"
+      [formField]="searchForm.fromDate"
+      [attr.aria-invalid]="fromDateError() ? 'true' : null"
+      [attr.aria-describedby]="fromDateError() ? 'from-date-error' : null"
+      class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 aria-invalid:border-rose-500"
+    />
+    @if (fromDateError(); as message) {
+      <p id="from-date-error" class="mt-1 text-sm text-rose-700">{{ message }}</p>
+    }
+  </div>
+
+  <div>
+    <label for="to-date" class="block text-sm font-medium text-slate-700">Ship by</label>
+    <input
+      id="to-date"
+      type="date"
+      [formField]="searchForm.toDate"
+      [attr.aria-invalid]="toDateError() ? 'true' : null"
+      [attr.aria-describedby]="toDateError() ? 'to-date-error' : null"
+      class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 aria-invalid:border-rose-500"
+    />
+    @if (toDateError(); as message) {
+      <p id="to-date-error" class="mt-1 text-sm text-rose-700">{{ message }}</p>
+    }
+  </div>
+
+  <fieldset
+    class="sm:col-span-2"
+    [attr.aria-describedby]="suppliersError() ? 'suppliers-error' : null"
+  >
+    <legend class="text-sm font-medium text-slate-700">Suppliers</legend>
+    <div class="mt-1 flex gap-2">
+      <button
+        type="button"
+        class="rounded-md px-2 py-1 text-sm font-medium text-accent-700 hover:bg-accent-50"
+        (click)="selectAll()"
+      >
+        Select all
+      </button>
+      <button
+        type="button"
+        class="rounded-md px-2 py-1 text-sm font-medium text-accent-700 hover:bg-accent-50"
+        (click)="selectNone()"
+      >
+        Select none
+      </button>
+    </div>
+    <ul role="list" class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      @for (supplier of suppliers(); track supplier.id) {
+        <li>
+          <label class="flex items-center gap-2 text-sm text-slate-800">
+            <input
+              #checkbox
+              type="checkbox"
+              class="size-4 accent-accent-600"
+              [checked]="selectedIds().has(supplier.id)"
+              (change)="toggleSupplier(supplier.id, checkbox.checked)"
+            />
+            {{ supplier.name }}
+          </label>
+        </li>
+      } @empty {
+        <li class="text-sm text-slate-500">Loading suppliers…</li>
+      }
+    </ul>
+    @if (suppliersError(); as message) {
+      <p id="suppliers-error" class="mt-1 text-sm text-rose-700">{{ message }}</p>
+    }
+  </fieldset>
+
+  <div class="flex items-center gap-3 sm:col-span-2">
+    <button
+      type="submit"
+      [disabled]="searchForm().invalid()"
+      class="rounded-md bg-accent-700 px-4 py-2 font-medium text-white hover:bg-accent-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+    >
+      Search
+    </button>
+    @if (searching()) {
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-100"
+        (click)="cancelRequested.emit()"
+      >
+        Cancel
+      </button>
+    }
+  </div>
+</form>

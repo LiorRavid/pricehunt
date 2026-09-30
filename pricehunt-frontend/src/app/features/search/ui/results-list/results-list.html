@@ -1,0 +1,52 @@
+<ol
+  role="list"
+  aria-label="Search results"
+  class="relative overflow-hidden rounded-card border border-slate-200 bg-slate-50"
+  [style.height]="listHeight()"
+>
+  @for (row of rows(); track row.supplierId; let rank = $index) {
+    <li
+      class="absolute inset-x-0 top-0 flex h-(--spacing-result-row) items-center justify-between gap-4 border-b border-slate-100 px-4"
+      [class]="rowClasses[row.state]"
+      [phRankPosition]="rank"
+      [attr.data-state]="row.state"
+    >
+      <div class="min-w-0">
+        <p class="truncate font-medium" [title]="row.supplierName">{{ row.supplierName }}</p>
+        @switch (row.state) {
+          @case ('quoted') {
+            <p class="text-sm text-slate-500">
+              Answered in {{ formatDuration(row.responseTimeMs) }}
+            </p>
+          }
+          @case ('failed') {
+            <p class="truncate text-sm" [title]="row.errorMessage">
+              Failed · {{ row.errorMessage }}
+            </p>
+          }
+          @case ('noResponse') {
+            <p class="text-sm">No response</p>
+          }
+          @default {
+            <p class="text-sm text-slate-500">
+              <span class="sr-only">Waiting for a quote</span>
+              <span
+                aria-hidden="true"
+                class="inline-block h-3 w-28 rounded bg-slate-200 motion-safe:animate-pulse"
+              ></span>
+            </p>
+          }
+        }
+      </div>
+      @if (row.state === 'quoted') {
+        <p class="shrink-0 text-lg font-semibold tabular-nums">
+          {{ formatMoney(row.price.amount, row.price.currency) }}
+        </p>
+      } @else {
+        <p class="shrink-0 text-lg">
+          <span aria-hidden="true">—</span><span class="sr-only">No price</span>
+        </p>
+      }
+    </li>
+  }
+</ol>
