@@ -453,6 +453,28 @@ They also caught flaws in the agent's own tests, which were fixed rather than we
 
 Every step is in the [AI usage log](docs/ai-usage-log.md), and every decision in the [decision log](docs/decision-log.md).
 
-> **Candidate's review notes**
->
-> _To be written by the candidate: what I reviewed, changed or would do differently from the AI's output._
+### Candidate's review notes
+
+The code was written with an AI coding agent. My part was to design the solution, make the decisions, set the quality bar and review the result.
+
+**Architecture and decisions**
+
+- **I designed the solution with AI as a consultant.** Before any code existed, I set the architecture and the standards and turned them into a phased brief, where every phase ends with a quality gate. The standards: Clean Architecture with an enforced dependency rule, Microsoft's C# coding conventions and the Angular style guide.
+- **I weighed the alternatives and made the calls.** For each significant decision, I had the AI lay out the options and their trade-offs, then decided; the records are in the [ADRs](docs/adr/) and the [decision log](docs/decision-log.md). Streaming is the clearest example: I compared Server-Sent Events with SignalR, WebSockets, `EventSource` and polling, and chose SSE over `POST`.
+  - **Why SSE:** the data flows one way, from server to browser, for at most six seconds. One request is one search, so closing it is the cancellation signal, and a bad request still gets a normal `400` with field errors. It's plain HTTP that proxies pass through, and .NET 10 supports it natively.
+  - **Why not the others:** SignalR and WebSockets add two-way connections and state that a one-way stream doesn't need. Native `EventSource` can only send `GET` and reconnects on its own, which would silently re-run a search. Polling adds extra requests, server-side state and latency on every result.
+- **I chose Tailwind CSS over plain CSS or SCSS.** The core of this assignment is the logic and the system design (streaming, the deadline, cancellation and persistence), not the visual design. Tailwind gave a clean, consistent, responsive UI quickly, with no custom stylesheets to design and maintain, so my time went into the core. The cost is long class lists in the templates, which I accepted for a UI this size.
+- **I changed the details that shape how the project is run and reviewed:**
+  - One `run.ps1` per project as the single run command, so a reviewer gets a prerequisite check and a one-line start for each project.
+  - The repository layout, with `pricehunt-backend` and `pricehunt-frontend` side by side.
+  - A commit straight to `main` at each passing phase gate, so the history reads as a sequence of verified steps.
+
+**Quality and review**
+
+- **I set the testing bar, and treated coverage as a floor rather than the goal.**
+  - Tests were written with the code in every phase.
+  - A fake clock and seeded randomness replace sleeps, so the 6-second deadline and cancellation are tested exactly.
+  - Line coverage must be at least 90 % on the Domain and Application layers, where the business rules live, and 80 % on the frontend unit tests.
+  - End-to-end tests cover the user-visible behaviour, and they run three times in a row to catch flakiness.
+- **I required checks in a real browser, not only unit tests.** Every UI change was verified through Playwright MCP and Chrome DevTools MCP, which caught the six problems listed above.
+- **I reviewed the code myself for clean code and best practices:** naming, responsibilities and method size, the dependency rule between layers, async code and cancellation, EF Core usage, and the Angular style guide and Tailwind conventions.
