@@ -17,7 +17,7 @@ public sealed class SearchOrchestratorTests
         Route.Create(Location.Create("Haifa"), Location.Create("Rotterdam")),
         ShippingDateRange.Create(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 8)));
 
-    private readonly FakeTimeProvider _time = new(s_start);
+    private readonly SteppingClock _time = new(s_start);
     private readonly InMemorySearchRepository _repository = new();
 
     [Fact]
@@ -146,7 +146,7 @@ public sealed class SearchOrchestratorTests
     [Trait("Requirement", "SV4")]
     public async Task A_supplier_that_throws_synchronously_is_isolated()
     {
-        var throwing = new ThrowingSupplier("throwing", new InvalidOperationException("Thrown before any await."));
+        var throwing = new ThrowingSupplier("throwing", () => new InvalidOperationException("Thrown before any await."));
         var healthy = new FakeSupplier("healthy");
         await using IAsyncEnumerator<SearchEvent> events = Run(throwing, healthy);
         await NextAsync(events);
@@ -155,6 +155,43 @@ public sealed class SearchOrchestratorTests
         healthy.Respond(50m);
 
         failed.SupplierId.Should().Be(throwing.Id);
+        (await NextAsync(events)).Should().BeOfType<QuoteReceived>();
+        (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Which.Status.Should().Be(SearchStatus.Completed);
+    }
+
+    [Fact]
+    [Trait("Requirement", "SV4")]
+    public async Task A_supplier_reporting_a_failure_without_a_message_fails_alone()
+    {
+        var careless = new ThrowingSupplier("careless", () => new SupplierException("rate_limited", ""));
+        var healthy = new FakeSupplier("healthy");
+        await using IAsyncEnumerator<SearchEvent> events = Run(careless, healthy);
+        await NextAsync(events);
+
+        SupplierFailed failed = (await NextAsync(events)).Should().BeOfType<SupplierFailed>().Subject;
+        healthy.Respond(80m);
+
+        failed.SupplierId.Should().Be(careless.Id);
+        failed.ErrorCode.Should().Be("unexpected_error");
+        (await NextAsync(events)).Should().BeOfType<QuoteReceived>();
+        (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Which.Status.Should().Be(SearchStatus.Completed);
+    }
+
+    [Fact]
+    [Trait("Requirement", "SV4")]
+    public async Task A_supplier_returning_no_price_fails_alone()
+    {
+        var broken = new FakeSupplier("broken");
+        var healthy = new FakeSupplier("healthy");
+        await using IAsyncEnumerator<SearchEvent> events = Run(broken, healthy);
+        await NextAsync(events);
+
+        broken.RespondWithoutPrice();
+        SupplierFailed failed = (await NextAsync(events)).Should().BeOfType<SupplierFailed>().Subject;
+        healthy.Respond(60m);
+
+        failed.SupplierId.Should().Be(broken.Id);
+        failed.ErrorCode.Should().Be("unexpected_error");
         (await NextAsync(events)).Should().BeOfType<QuoteReceived>();
         (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Which.Status.Should().Be(SearchStatus.Completed);
     }
@@ -194,6 +231,27 @@ public sealed class SearchOrchestratorTests
         SavedOutcome outcome = _repository.Outcomes.Should().ContainSingle().Subject;
         outcome.Status.Should().Be(SearchStatus.Completed);
         outcome.ClosingResponses.Should().BeEmpty();
+    }
+
+    [Fact]
+    [Trait("Requirement", "SV4")]
+    public async Task Completes_when_every_supplier_fails()
+    {
+        var first = new FakeSupplier("first");
+        var second = new FakeSupplier("second");
+        await using IAsyncEnumerator<SearchEvent> events = Run(first, second);
+        await NextAsync(events);
+
+        first.Fail(new SupplierException("supplier_unavailable", "First is unavailable."));
+        (await NextAsync(events)).Should().BeOfType<SupplierFailed>();
+        second.Fail(new InvalidOperationException("Second broke."));
+        (await NextAsync(events)).Should().BeOfType<SupplierFailed>();
+
+        SearchCompleted completed = (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Subject;
+        completed.Status.Should().Be(SearchStatus.Completed);
+        completed.SucceededCount.Should().Be(0);
+        completed.FailedCount.Should().Be(2);
+        completed.NoResponseSupplierIds.Should().BeEmpty();
     }
 
     [Fact]
@@ -317,6 +375,25 @@ public sealed class SearchOrchestratorTests
 
     [Fact]
     [Trait("Requirement", "SV3")]
+    public async Task A_clock_stepping_back_still_ends_the_search_once()
+    {
+        var aurora = new FakeSupplier("aurora");
+        await using IAsyncEnumerator<SearchEvent> events = Run(aurora);
+        await NextAsync(events);
+
+        // The wall clock steps back past the start (an NTP correction, a resumed VM).
+        _time.WallClockStepBack = TimeSpan.FromSeconds(10);
+        aurora.Respond(10m);
+
+        (await NextAsync(events)).Should().BeOfType<QuoteReceived>();
+        SearchCompleted completed = (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Subject;
+        completed.Status.Should().Be(SearchStatus.Completed);
+        completed.CompletedAt.Should().Be(s_start.UtcDateTime, "a search never ends before it started");
+        (await events.MoveNextAsync().AsTask().WaitAsync(Guard)).Should().BeFalse();
+    }
+
+    [Fact]
+    [Trait("Requirement", "SV3")]
     public async Task Emits_exactly_one_terminal_event_and_nothing_after_it()
     {
         var aurora = new FakeSupplier("aurora");
@@ -378,6 +455,57 @@ public sealed class SearchOrchestratorTests
         _repository.Outcomes.Should().ContainSingle().Which.Status.Should().Be(SearchStatus.Faulted);
     }
 
+    [Fact]
+    [Trait("Requirement", "DB2")]
+    public async Task A_response_whose_write_failed_is_saved_with_the_faulted_outcome()
+    {
+        var aurora = new FakeSupplier("aurora");
+        var bluefin = new FakeSupplier("bluefin");
+        _repository.FailResponseWritesWith = new IOException("The disk is full.");
+        await using IAsyncEnumerator<SearchEvent> events = Run(aurora, bluefin);
+        await NextAsync(events);
+
+        aurora.Respond(10m);
+        (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Which.Status.Should().Be(SearchStatus.Faulted);
+
+        // Every selected supplier keeps exactly one recorded outcome.
+        SavedOutcome outcome = _repository.Outcomes.Should().ContainSingle().Subject;
+        outcome.ClosingResponses.Select(response => (response.SupplierId, response.Outcome))
+            .Should().BeEquivalentTo([(aurora.Id, ResponseOutcome.Succeeded), (bluefin.Id, ResponseOutcome.Cancelled)]);
+    }
+
+    [Fact]
+    public async Task A_fault_still_ends_the_stream_when_its_outcome_cannot_be_saved()
+    {
+        var aurora = new FakeSupplier("aurora");
+        _repository.FailResponseWritesWith = new IOException("The disk is full.");
+        _repository.FailOutcomeWritesWith = new IOException("The disk is still full.");
+        await using IAsyncEnumerator<SearchEvent> events = Run(aurora);
+        await NextAsync(events);
+
+        aurora.Respond(10m);
+
+        (await NextAsync(events)).Should().BeOfType<SearchCompleted>().Which.Status.Should().Be(SearchStatus.Faulted);
+        (await events.MoveNextAsync().AsTask().WaitAsync(Guard)).Should().BeFalse();
+        _repository.Outcomes.Should().BeEmpty("the search stays running for startup recovery to close");
+    }
+
+    [Fact]
+    [Trait("Requirement", "SV5")]
+    public async Task A_failed_outcome_write_after_the_caller_left_ends_quietly()
+    {
+        var aurora = new FakeSupplier("aurora");
+        using var caller = new CancellationTokenSource();
+        _repository.FailOutcomeWritesWith = new IOException("The disk is full.");
+        await using IAsyncEnumerator<SearchEvent> events = Run(caller.Token, aurora);
+        await NextAsync(events);
+
+        await caller.CancelAsync();
+
+        (await events.MoveNextAsync().AsTask().WaitAsync(Guard)).Should().BeFalse("nobody is listening any more");
+        await aurora.CancellationObserved.WaitAsync(Guard);
+    }
+
     private static CancellationToken Guard => TestContext.Current.CancellationToken;
 
     private static async Task<SearchEvent> NextAsync(IAsyncEnumerator<SearchEvent> events)
@@ -397,4 +525,18 @@ public sealed class SearchOrchestratorTests
         _time,
         Options.Create(new SearchOptions { MaxDuration = s_maxDuration }),
         NullLogger<SearchOrchestrator>.Instance);
+
+    /// <summary>
+    /// A fake clock whose wall-clock time can step back, as a real one can, while its timestamps
+    /// (for response times) and timers keep running forward.
+    /// </summary>
+    private sealed class SteppingClock(DateTimeOffset start) : FakeTimeProvider(start)
+    {
+        public TimeSpan WallClockStepBack { get; set; }
+
+        public override DateTimeOffset GetUtcNow() => base.GetUtcNow() - WallClockStepBack;
+
+        // The base timestamp reads GetUtcNow(); a monotonic timestamp must not step back with it.
+        public override long GetTimestamp() => base.GetUtcNow().UtcTicks;
+    }
 }

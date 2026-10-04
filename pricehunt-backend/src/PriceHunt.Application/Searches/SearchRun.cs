@@ -24,6 +24,7 @@ internal sealed class SearchRun : IAsyncDisposable
     private readonly CancellationTokenSource _deadline;
     private readonly CancellationTokenSource _calls;
     private readonly IAsyncEnumerator<Task<SupplierCallResult>> _completions;
+    private SupplierResponse? _unsaved;
     private bool _abandoned;
     private bool _finished;
 
@@ -141,8 +142,10 @@ internal sealed class SearchRun : IAsyncDisposable
         {
             call = supplier.GetQuoteAsync(criteria, cancellationToken);
 
-            // WaitAsync keeps the deadline even when a supplier ignores its token.
-            Money price = await call.WaitAsync(cancellationToken).ConfigureAwait(false);
+            // WaitAsync keeps the deadline even when a supplier ignores its token. A missing price
+            // breaks the port's contract, so it fails this supplier alone, like any other bug.
+            Money price = await call.WaitAsync(cancellationToken).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("The supplier returned no price.");
             return new QuotedCall(supplier, price, _timeProvider.GetElapsedTime(startedAt), UtcNow());
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -168,13 +171,13 @@ internal sealed class SearchRun : IAsyncDisposable
         {
             case QuotedCall quoted:
                 SupplierResponse quote = _search.RecordQuote(quoted.Supplier.Id, quoted.Price, quoted.Elapsed, quoted.EndedAt);
-                await PersistAsync(token => _repository.AddResponseAsync(_search.Id, quote, token)).ConfigureAwait(false);
+                await SaveResponseAsync(quote).ConfigureAwait(false);
                 SearchLog.QuoteReceived(_logger, quote.SupplierId.Value, quoted.Price.Amount, quoted.Price.Currency, (long)quoted.Elapsed.TotalMilliseconds);
                 return new QuoteReceived(_search.Id, quote.SupplierId, quoted.Price, quote.ResponseTime, quote.ReceivedAt);
 
             case FailedCall failed:
                 SupplierResponse failure = _search.RecordFailure(failed.Supplier.Id, failed.ErrorCode, failed.ErrorMessage, failed.Elapsed, failed.EndedAt);
-                await PersistAsync(token => _repository.AddResponseAsync(_search.Id, failure, token)).ConfigureAwait(false);
+                await SaveResponseAsync(failure).ConfigureAwait(false);
                 SearchLog.SupplierFailed(_logger, failure.SupplierId.Value, failed.ErrorCode, (long)failed.Elapsed.TotalMilliseconds);
                 return new SupplierFailed(_search.Id, failure.SupplierId, failed.ErrorCode, failed.ErrorMessage, failure.ResponseTime, failure.ReceivedAt);
 
@@ -220,9 +223,13 @@ internal sealed class SearchRun : IAsyncDisposable
         DateTime now = UtcNow();
         if (_search.Status == SearchStatus.Running)
         {
-            IReadOnlyList<SupplierResponse> closing = _search.Fault(now);
+            // Nothing may escape here: this path guarantees the terminal event.
             try
             {
+                // A response whose own write failed is already recorded in the search, so it is saved
+                // with the outcome: every selected supplier keeps exactly one recorded outcome.
+                IReadOnlyList<SupplierResponse> pending = _search.Fault(now);
+                IReadOnlyList<SupplierResponse> closing = _unsaved is null ? pending : [_unsaved, .. pending];
                 await PersistAsync(token => _repository.SaveOutcomeAsync(_search, closing, token)).ConfigureAwait(false);
             }
             catch (Exception persistenceFailure) when (!persistenceFailure.IsCritical())
@@ -250,6 +257,13 @@ internal sealed class SearchRun : IAsyncDisposable
             [.. _search.SelectedSuppliers.Where(id => !responded.Contains(id))]);
     }
 
+    private async Task SaveResponseAsync(SupplierResponse response)
+    {
+        _unsaved = response;
+        await PersistAsync(token => _repository.AddResponseAsync(_search.Id, response, token)).ConfigureAwait(false);
+        _unsaved = null;
+    }
+
     private async Task PersistAsync(Func<CancellationToken, Task> write)
     {
         // Never the caller's token: an arrived response and the final state are recorded even after
@@ -258,7 +272,12 @@ internal sealed class SearchRun : IAsyncDisposable
         await write(timeout.Token).ConfigureAwait(false);
     }
 
-    private DateTime UtcNow() => _timeProvider.GetUtcNow().UtcDateTime;
+    // The wall clock can step back (an NTP correction, a resumed VM), but a search never ends before it started.
+    private DateTime UtcNow()
+    {
+        DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
+        return now < _search.CreatedAt ? _search.CreatedAt : now;
+    }
 
     private static void ObserveAbandonedCall(Task? call)
     {

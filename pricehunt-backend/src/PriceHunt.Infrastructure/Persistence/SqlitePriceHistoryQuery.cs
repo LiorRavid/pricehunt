@@ -21,8 +21,11 @@ internal sealed class SqlitePriceHistoryQuery(IDbContextFactory<PriceHuntDbConte
         IQueryable<SupplierResponseEntity> responses = Filter(db.SupplierResponses.AsNoTracking(), filter);
 
         int totalCount = await responses.CountAsync(cancellationToken).ConfigureAwait(false);
+
+        // 64-bit, then capped: a page that far has no rows, and the product mustn't wrap round to page 1.
+        int offset = (int)Math.Min((filter.Page - 1L) * filter.PageSize, int.MaxValue);
         var rows = await Sort(responses, filter.SortBy, filter.SortDirection)
-            .Skip((filter.Page - 1) * filter.PageSize)
+            .Skip(offset)
             .Take(filter.PageSize)
             .Select(response => new
             {

@@ -168,11 +168,26 @@ public sealed class MoneyTests
     [InlineData("US")]
     [InlineData("USDT")]
     [InlineData("")]
+    [InlineData("USD\n")]
     public void Rejects_a_currency_that_is_not_an_iso_4217_code(string currency)
     {
         Action create = () => Money.Create(1m, currency);
 
         create.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Accepts_the_largest_amount_whose_minor_units_fit()
+    {
+        Money.Create(92_233_720_368_547_758.07m, "USD").ToMinorUnits().Should().Be(long.MaxValue);
+    }
+
+    [Fact]
+    public void Rejects_an_amount_whose_minor_units_overflow()
+    {
+        Action create = () => Money.Create(92_233_720_368_547_758.08m, "USD");
+
+        create.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -203,6 +218,7 @@ public sealed class SupplierIdTests
     [InlineData("aurora freight")]
     [InlineData("-aurora")]
     [InlineData("aurora--freight")]
+    [InlineData("aurora\n")]
     public void Rejects_anything_that_is_not_a_slug(string? value)
     {
         bool created = SupplierId.TryCreate(value, out SupplierId? id);

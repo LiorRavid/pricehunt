@@ -122,6 +122,18 @@ public sealed class SqlitePriceHistoryQueryTests(HistoryDataset dataset) : IClas
         page.Page.Should().Be(pageNumber);
     }
 
+    [Fact]
+    [Trait("Requirement", "HC2")]
+    public async Task A_page_past_the_32_bit_offset_range_is_empty()
+    {
+        // (1 073 741 825 − 1) × 100 wraps round to an offset of exactly 0 in 32-bit arithmetic.
+        PagedResult<PriceHistoryItem> page = await QueryAsync(new PriceHistoryFilter { Page = 1_073_741_825, PageSize = 100 });
+
+        page.Items.Should().BeEmpty();
+        page.TotalCount.Should().Be(5);
+        page.Page.Should().Be(1_073_741_825);
+    }
+
     [Theory]
     [InlineData(0, 20)]
     [InlineData(1, 0)]

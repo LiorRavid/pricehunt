@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using PriceHunt.Domain;
 
 namespace PriceHunt.Api.Tests;
 
@@ -95,6 +96,23 @@ public sealed class HistoryEndpointTests(HistoryApiFixture fixture) : IClassFixt
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         problem.RootElement.GetProperty("errors").EnumerateObject().Select(error => error.Name).Should().Contain(invalidField);
+    }
+
+    [Theory]
+    [Trait("Requirement", "H2")]
+    [InlineData("origin")]
+    [InlineData("destination")]
+    public async Task Rejects_a_location_filter_longer_than_a_location(string field)
+    {
+        using HttpClient client = fixture.CreateClient();
+
+        using HttpResponseMessage response = await client.GetAsync(
+            $"/api/history?{field}={new string('x', Location.MaxLength + 1)}",
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        problem.RootElement.GetProperty("errors").EnumerateObject().Select(error => error.Name).Should().Contain(field);
     }
 
     [Theory]

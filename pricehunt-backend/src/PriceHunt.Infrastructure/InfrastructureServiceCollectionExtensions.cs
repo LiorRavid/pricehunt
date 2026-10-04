@@ -35,7 +35,15 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddDbContextFactory<PriceHuntDbContext>((serviceProvider, options) =>
         {
             string databasePath = Path.GetFullPath(serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value.Path, contentRootPath);
-            options.UseSqlite(new SqliteConnectionStringBuilder { DataSource = databasePath }.ToString());
+
+            // While another connection holds the database's lock, SQLite waits for this long and
+            // ignores cancellation tokens, so this is what bounds each write (Search:PersistenceTimeout).
+            TimeSpan writeTimeout = serviceProvider.GetRequiredService<IOptions<SearchOptions>>().Value.PersistenceTimeout;
+            options.UseSqlite(new SqliteConnectionStringBuilder
+            {
+                DataSource = databasePath,
+                DefaultTimeout = (int)Math.Ceiling(writeTimeout.TotalSeconds),
+            }.ToString());
         });
 
         services.AddSingleton<ISearchRepository, SqliteSearchRepository>();

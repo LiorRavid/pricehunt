@@ -47,5 +47,8 @@ internal sealed class FakeSupplier(string id, bool ignoresCancellation = false) 
     // A late answer after cancellation is ignored, like a real reply nobody is waiting for any more.
     public void Respond(decimal amount) => _answer.TrySetResult(Money.Create(amount, "USD"));
 
+    // A supplier breaking the port's contract: nullable annotations aren't enforced at run time.
+    public void RespondWithoutPrice() => _answer.TrySetResult(null!);
+
     public void Fail(Exception exception) => _answer.TrySetException(exception);
 }

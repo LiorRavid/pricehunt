@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using PriceHunt.Application.Searches;
 using PriceHunt.Application.Tests.Fakes;
@@ -9,6 +10,7 @@ namespace PriceHunt.Application.Tests;
 public sealed class InterruptedSearchRecoveryTests
 {
     private static readonly DateTime s_createdAt = new(2026, 9, 30, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly TimeSpan s_maxDuration = TimeSpan.FromSeconds(6);
 
     private static readonly SearchCriteria s_criteria = new(
         Route.Create(Location.Create("Haifa"), Location.Create("Rotterdam")),
@@ -32,8 +34,40 @@ public sealed class InterruptedSearchRecoveryTests
         recovered.Should().Be(1);
         SavedOutcome outcome = _repository.Outcomes.Should().ContainSingle().Subject;
         outcome.Status.Should().Be(SearchStatus.Cancelled);
-        outcome.CompletedAt.Should().Be(s_createdAt.AddMinutes(5));
+        outcome.CompletedAt.Should().Be(s_createdAt + s_maxDuration, "the restart came 5 minutes later, past the deadline");
         outcome.ClosingResponses.Should().ContainSingle().Which.SupplierId.Should().Be(bluefin);
+    }
+
+    [Fact]
+    [Trait("Requirement", "DB2")]
+    public async Task Closes_at_the_deadline_when_the_restart_comes_later()
+    {
+        var aurora = SupplierId.Create("aurora");
+        _repository.Running.Add(Search.Start(s_criteria, [aurora], s_createdAt));
+
+        await Recovery().RecoverAsync(TestContext.Current.CancellationToken);
+
+        SavedOutcome outcome = _repository.Outcomes.Should().ContainSingle().Subject;
+        outcome.CompletedAt.Should().Be(s_createdAt + s_maxDuration, "a search can't outlive its deadline");
+        SupplierResponse closed = outcome.ClosingResponses.Should().ContainSingle().Subject;
+        closed.ResponseTime.Should().Be(s_maxDuration, "the downtime isn't a response time");
+        closed.ReceivedAt.Should().Be(s_createdAt + s_maxDuration);
+    }
+
+    [Fact]
+    [Trait("Requirement", "DB1")]
+    public async Task Completes_a_search_whose_suppliers_had_all_answered()
+    {
+        var aurora = SupplierId.Create("aurora");
+        var answered = Search.Start(s_criteria, [aurora], s_createdAt);
+        answered.RecordQuote(aurora, Money.Create(10m, "USD"), TimeSpan.FromSeconds(1), s_createdAt.AddSeconds(1));
+        _repository.Running.Add(answered);
+
+        await Recovery().RecoverAsync(TestContext.Current.CancellationToken);
+
+        SavedOutcome outcome = _repository.Outcomes.Should().ContainSingle().Subject;
+        outcome.Status.Should().Be(SearchStatus.Completed);
+        outcome.ClosingResponses.Should().BeEmpty();
     }
 
     [Fact]
@@ -57,5 +91,5 @@ public sealed class InterruptedSearchRecoveryTests
     }
 
     private InterruptedSearchRecovery Recovery() =>
-        new(_repository, _time, NullLogger<InterruptedSearchRecovery>.Instance);
+        new(_repository, _time, Options.Create(new SearchOptions { MaxDuration = s_maxDuration }), NullLogger<InterruptedSearchRecovery>.Instance);
 }

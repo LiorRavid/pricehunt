@@ -47,6 +47,22 @@ describe('ProgressPanel [CL4]', () => {
     );
   });
 
+  it('announces the progress politely as suppliers answer', async () => {
+    await render({
+      searching: true,
+      progress: { responded: 2, failed: 1, total: 7, pending: [] },
+      maxDurationMs: 6000,
+    });
+
+    const count = Array.from(element.querySelectorAll('p')).find((paragraph) =>
+      paragraph.textContent.includes('suppliers responded'),
+    );
+    expect(count?.getAttribute('aria-live')).toBe('polite');
+    expect(count?.getAttribute('aria-atomic')).toBe('true');
+    // The outcome stays the only status region.
+    expect(element.querySelectorAll('[role="status"]')).toHaveLength(1);
+  });
+
   it('announces the final state in a polite live region', async () => {
     await render({
       searching: false,
@@ -74,14 +90,18 @@ describe('ProgressPanel [CL4]', () => {
       total: names.length,
       pending: names.map((name) => ({ id: name.toLowerCase(), name })),
     });
-    await render({ searching: true, progress: progress('Albatross', 'Bramble', 'Cobalt') });
+    // The runner shares modules between spec files, so the spy is restored even if this test fails.
+    try {
+      await render({ searching: true, progress: progress('Albatross', 'Bramble', 'Cobalt') });
 
-    fixture.componentRef.setInput('progress', progress('Driftwood', 'Ember', 'Foxglove'));
-    await fixture.whenStable();
+      fixture.componentRef.setInput('progress', progress('Driftwood', 'Ember', 'Foxglove'));
+      await fixture.whenStable();
 
-    expect(element.textContent).toContain('Driftwood');
-    expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
+      expect(element.textContent).toContain('Driftwood');
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('shows nothing but an empty live region before the first search', async () => {

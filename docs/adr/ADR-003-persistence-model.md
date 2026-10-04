@@ -33,12 +33,14 @@ EF Core's SQLite provider **can't translate comparisons or `ORDER BY` on `decima
 - **Ids:** Guid v7, stored as text. The first characters encode the creation time, so ids work as a deterministic, time-ordered tie-breaker for sorting.
 - **Case-insensitive matching:** origin and destination are also stored upper-cased with `ToUpperInvariant`. Filtering and sorting use those columns because SQLite's `NOCASE` only folds ASCII. For example, "zürich" must match "Zürich".
 
-**Indexes** cover every history filter and sort column:
+**Indexes** exist for every history filter and sort column:
 
 - `SupplierResponses`: `ReceivedAt`, (`SupplierId`, `ReceivedAt`), (`Outcome`, `ReceivedAt`), `PriceMinorUnits` and `ResponseTimeMs`.
 - `Searches`: `OriginNormalized`, `DestinationNormalized`, and `Status`, which the startup recovery uses to find searches left `Running`.
 - `Suppliers`: `Name`.
 - `SearchSuppliers`: `SupplierId`, for the foreign key.
+
+The query plans of the screen's queries (`EXPLAIN QUERY PLAN`, 2026-10-04 review), which always have a date range, read the matching responses through (`Outcome`, `ReceivedAt`), or (`SupplierId`, `ReceivedAt`) when suppliers are chosen, and sort them. The `PriceMinorUnits`, `ResponseTimeMs`, `OriginNormalized`, `DestinationNormalized` and `Suppliers.Name` indexes serve none of them: the location filter is a substring match, which no index can use.
 
 **Mapping style.**
 - The Domain has no EF attributes. Infrastructure has its own persistence entities, each with an explicit `IEntityTypeConfiguration`, and maps to and from the domain explicitly (`PersistenceMapping`).
@@ -63,6 +65,6 @@ EF Core's SQLite provider **can't translate comparisons or `ORDER BY` on `decima
 
 ## Consequences
 
-- Every history filter, sort and page runs in SQL against an index, with a deterministic order.
+- Every history filter, sort and page runs in SQL with a deterministic order: the date range is read through an index, and the matching rows are sorted.
 - Mixing currencies would make price sorting meaningless. This is a known limitation, since the simulation only quotes USD, and it's listed in the README.
 - The `Suppliers` table mirrors the configured catalogue. Removed suppliers keep their rows so older history still resolves.

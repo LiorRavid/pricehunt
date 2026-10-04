@@ -51,7 +51,7 @@ The repository uses `IDbContextFactory` with one short-lived context per write. 
 
 A `SearchId` logging scope is opened inside every `SearchRun` call, because a scope opened inside an async iterator doesn't reliably survive a `yield`. Supplier outcomes, deadlines and cancellations are logged through source-generated `LoggerMessage` methods.
 
-At startup, any search left `Running` by a crash is closed as `Cancelled`, using the same domain rule.
+At startup, any search left `Running` by a crash is closed as `Cancelled`, using the same domain rule, or as `Completed` if every supplier had answered. It is closed at its deadline at the latest, so a long downtime never shows up as a response time.
 
 ## Alternatives considered
 

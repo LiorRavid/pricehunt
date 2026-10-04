@@ -24,11 +24,14 @@ public sealed partial record Money
     /// <param name="amount">The amount in major units, at most two decimals.</param>
     /// <param name="currency">The ISO-4217 currency code.</param>
     /// <returns>The money value.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">The amount is negative.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The amount is negative, or too large to count in minor units.</exception>
     /// <exception cref="ArgumentException">The amount has more than two decimals, or the currency is not a code.</exception>
     public static Money Create(decimal amount, string currency)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(amount);
+
+        // The largest amount whose minor units still fit in a long.
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(amount, long.MaxValue / 100m);
         if (decimal.Round(amount, 2) != amount)
         {
             throw new ArgumentException("An amount can have at most two decimals.", nameof(amount));
@@ -52,6 +55,7 @@ public sealed partial record Money
     /// <returns>The amount multiplied by 100.</returns>
     public long ToMinorUnits() => decimal.ToInt64(Amount * 100m);
 
-    [GeneratedRegex("^[A-Z]{3}$")]
+    // \z, not $: $ also matches before a final newline.
+    [GeneratedRegex(@"^[A-Z]{3}\z")]
     private static partial Regex CurrencyCodePattern();
 }

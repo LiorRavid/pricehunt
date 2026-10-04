@@ -78,6 +78,14 @@ describe('SupplierMultiselect [HC1]', () => {
     expect(label()).toBe('2 selected');
   });
 
+  it("counts ids the catalogue doesn't know instead of claiming every supplier", async () => {
+    await select(['retired-line']);
+    expect(label()).toBe('1 selected');
+
+    await select(['albatross-freight', 'retired-line']);
+    expect(label()).toBe('Albatross Freight + 1 more');
+  });
+
   it('opens a multi-select listbox and emits each change of selection', async () => {
     combobox().click();
     await fixture.whenStable();

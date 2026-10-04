@@ -8,7 +8,8 @@
     Works on Windows PowerShell 5.1 and PowerShell 7+, from any current directory.
 
 .PARAMETER ResetDatabase
-    Deletes the SQLite database before starting, so the API starts with an empty history.
+    Deletes the SQLite database the API uses (Database__Path, if set) before starting, so the API
+    starts with an empty history.
 
 .EXAMPLE
     .\pricehunt-backend\run.ps1
@@ -25,8 +26,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $requiredSdk = [version]'10.0.100'
-$projectPath = Join-Path $PSScriptRoot 'src/PriceHunt.Api/PriceHunt.Api.csproj'
-$databaseDirectory = Join-Path $PSScriptRoot 'src/PriceHunt.Api/App_Data'
+$apiDirectory = Join-Path $PSScriptRoot 'src/PriceHunt.Api'
+$projectPath = Join-Path $apiDirectory 'PriceHunt.Api.csproj'
 
 if (-not (Get-Command 'dotnet' -ErrorAction SilentlyContinue)) {
     Write-Host "The .NET SDK $requiredSdk or later is required, but 'dotnet' was not found on PATH." -ForegroundColor Red
@@ -56,9 +57,32 @@ if (-not $hasRequiredSdk) {
     exit 1
 }
 
-if ($ResetDatabase -and (Test-Path -LiteralPath $databaseDirectory)) {
-    Get-ChildItem -LiteralPath $databaseDirectory -Filter 'pricehunt.db*' | Remove-Item -Force
-    Write-Host 'Database deleted; it is recreated when the API starts.'
+if ($ResetDatabase) {
+    # The file the API uses: Database__Path when set, else Database:Path in appsettings.json;
+    # a relative path is relative to the API folder.
+    $databasePath = $env:Database__Path
+    if (-not $databasePath) {
+        $settings = Get-Content -LiteralPath (Join-Path $apiDirectory 'appsettings.json') -Raw | ConvertFrom-Json
+        $databasePath = $settings.Database.Path
+    }
+    if (-not [System.IO.Path]::IsPathRooted($databasePath)) {
+        $databasePath = Join-Path $apiDirectory $databasePath
+    }
+
+    # The database file and its write-ahead-log files.
+    $databaseFolder = Split-Path -Parent $databasePath
+    $databaseFiles = @()
+    if (Test-Path -LiteralPath $databaseFolder) {
+        $databaseFiles = @(Get-ChildItem -LiteralPath $databaseFolder -Filter "$(Split-Path -Leaf $databasePath)*" -File)
+    }
+
+    if ($databaseFiles.Count -gt 0) {
+        $databaseFiles | Remove-Item -Force
+        Write-Host "Database deleted: $databasePath. It is recreated when the API starts."
+    }
+    else {
+        Write-Host "No database to delete at $databasePath."
+    }
 }
 
 Write-Host ''

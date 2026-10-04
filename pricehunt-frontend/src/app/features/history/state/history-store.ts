@@ -60,9 +60,13 @@ export class HistoryStore {
     return summarizePage(page, pageSize, this.page()?.totalCount ?? 0);
   });
 
+  // Each box follows its own URL value only, so changing another filter keeps what is being typed.
+  private readonly urlOrigin = computed(() => this.query().origin);
+  private readonly urlDestination = computed(() => this.query().destination);
+
   /** What the location boxes show: the URL's text, or what's being typed before it gets there. */
-  readonly originText = linkedSignal(() => this.query().origin);
-  readonly destinationText = linkedSignal(() => this.query().destination);
+  readonly originText = linkedSignal(() => this.urlOrigin());
+  readonly destinationText = linkedSignal(() => this.urlDestination());
 
   private readonly typing = new Subject<void>();
 

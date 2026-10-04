@@ -38,6 +38,7 @@ public sealed partial record SupplierId
     /// <inheritdoc />
     public override string ToString() => Value;
 
-    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]
+    // \z, not $: $ also matches before a final newline.
+    [GeneratedRegex(@"^[a-z0-9]+(-[a-z0-9]+)*\z")]
     private static partial Regex SlugPattern();
 }

@@ -88,6 +88,18 @@ describe('HistoryFilters [HC1][H2]', () => {
     ]);
   });
 
+  it('puts the date in use back when a date field is cleared or impossible', () => {
+    const from = input('history-from');
+    from.value = '';
+    from.dispatchEvent(new Event('change'));
+    const to = input('history-to');
+    to.value = '275759-09-28';
+    to.dispatchEvent(new Event('change'));
+
+    expect([from.value, to.value]).toEqual(['2026-09-24', '2026-09-30']);
+    expect(emitted).toEqual([]);
+  });
+
   it('labels every control', () => {
     const labelled = ['history-from', 'history-to', 'history-origin', 'history-destination'].map(
       (id) => element.querySelector(`label[for="${id}"]`)?.textContent.trim(),

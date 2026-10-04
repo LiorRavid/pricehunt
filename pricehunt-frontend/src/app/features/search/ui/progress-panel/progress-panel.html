@@ -1,7 +1,8 @@
 <!-- The panel keeps one height from the start of a search to its end, so the results never move. -->
 <section aria-label="Search progress" class="space-y-2">
   @if (searching() || badge()) {
-    <p class="truncate text-sm font-medium text-slate-700">
+    <!-- Read out as a whole each time a supplier answers; the outcome has its own status region. -->
+    <p class="truncate text-sm font-medium text-slate-700" aria-live="polite" aria-atomic="true">
       {{ progress().responded }} of {{ progress().total }} suppliers responded
       @if (progress().failed > 0) {
         <span class="text-slate-500">· {{ progress().failed }} failed</span>

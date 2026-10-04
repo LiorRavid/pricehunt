@@ -114,6 +114,23 @@ describe('history URL [HC1][HC2]', () => {
     expect(read({ page: 'abc' }).page).toBe(1);
   });
 
+  it('keeps every value within what the API accepts', () => {
+    expect(
+      read({
+        from: '2026-09-20',
+        to: '9999-12-31',
+        page: '3000000000',
+        suppliers: ['a'.repeat(65), 'albatross-freight'],
+      }),
+    ).toMatchObject({ from: '2026-09-20', to: today, page: 1, suppliers: ['albatross-freight'] });
+    // A link shared from a time zone that's already in tomorrow.
+    expect(read({ from: '2026-10-01', to: '2026-10-01' })).toMatchObject({
+      from: today,
+      to: today,
+    });
+    expect(read({ page: '2147483647' }).page).toBe(2_147_483_647);
+  });
+
   it('sorts in the column default direction when the URL has none', () => {
     expect(read({ sort: 'price' }).sortDirection).toBe('asc');
     expect(read({ sort: 'date' }).sortDirection).toBe('desc');

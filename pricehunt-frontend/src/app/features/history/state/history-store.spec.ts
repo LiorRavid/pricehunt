@@ -158,6 +158,26 @@ describe('HistoryStore [HC1][HC2]', () => {
     expect(nextRequest().request.params.get('origin')).toBe('Haifa');
   });
 
+  it('keeps the location being typed when another filter changes before typing pauses', async () => {
+    const store = await open('/history');
+    nextRequest().flush(page());
+    vi.useFakeTimers();
+
+    store.typeOrigin('Rotterdam');
+    const toggled = navigationEnd();
+    store.setIncludeFailures(true);
+    await vi.advanceTimersByTimeAsync(1);
+    await toggled;
+
+    expect(store.originText()).toBe('Rotterdam');
+    nextRequest().flush(page());
+    const typed = navigationEnd();
+    await vi.advanceTimersByTimeAsync(TEXT_FILTER_DELAY_MS);
+    await typed;
+    expect(router.url).toBe('/history?origin=Rotterdam&failures=true');
+    expect(nextRequest().request.params.get('origin')).toBe('Rotterdam');
+  });
+
   it('follows the URL when it changes from outside, as back and forward do', async () => {
     const store = await open('/history?origin=haifa');
     nextRequest().flush(page());

@@ -16,6 +16,8 @@ internal sealed class InMemorySearchRepository : ISearchRepository
 
     public Exception? FailResponseWritesWith { get; set; }
 
+    public Exception? FailOutcomeWritesWith { get; set; }
+
     public Task AddAsync(Search search, CancellationToken cancellationToken)
     {
         Added.Add(search);
@@ -35,6 +37,11 @@ internal sealed class InMemorySearchRepository : ISearchRepository
 
     public Task SaveOutcomeAsync(Search search, IReadOnlyCollection<SupplierResponse> closingResponses, CancellationToken cancellationToken)
     {
+        if (FailOutcomeWritesWith is { } exception)
+        {
+            return Task.FromException(exception);
+        }
+
         Outcomes.Add(new SavedOutcome(search.Id, search.Status, search.CompletedAt, [.. closingResponses], cancellationToken.IsCancellationRequested));
         return Task.CompletedTask;
     }

@@ -50,16 +50,19 @@ export class SupplierMultiselect {
 
 /** "All suppliers", one name, or the first name and how many more. */
 function describeSelection(suppliers: readonly Supplier[], ids: readonly string[]): string {
-  if (suppliers.length === 0) {
-    return ids.length === 0 ? 'All suppliers' : `${String(ids.length)} selected`;
-  }
-
-  const [first, ...others] = suppliers
+  const names = suppliers
     .filter((supplier) => ids.includes(supplier.id))
     .map((supplier) => supplier.name);
-  if (first === undefined || others.length + 1 === suppliers.length) {
+  if (ids.length === 0 || (suppliers.length > 0 && names.length === suppliers.length)) {
     return 'All suppliers';
   }
 
-  return others.length === 0 ? first : `${first} + ${String(others.length)} more`;
+  // Ids it can't name (the suppliers are still loading, or a supplier has since been removed) still
+  // filter the history, so they are counted rather than read as every supplier.
+  const [first] = names;
+  if (first === undefined) {
+    return `${String(ids.length)} selected`;
+  }
+
+  return ids.length === 1 ? first : `${first} + ${String(ids.length - 1)} more`;
 }

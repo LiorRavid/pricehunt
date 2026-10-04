@@ -25,4 +25,14 @@ public sealed class SupplierExceptionTests
 
         create.Should().Throw<ArgumentException>();
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Requires_a_user_facing_message(string blank)
+    {
+        Action create = () => _ = new SupplierException("supplier_unavailable", blank);
+
+        create.Should().Throw<ArgumentException>().WithParameterName("message");
+    }
 }

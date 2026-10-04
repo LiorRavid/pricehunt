@@ -15,6 +15,10 @@ const DEFAULT_DAYS = 7;
 /** The API's limit for a location filter. */
 const MAX_TEXT_LENGTH = 100;
 
+/** The API's limits for a supplier id and a page number (a 32-bit integer). */
+const MAX_SUPPLIER_ID_LENGTH = 64;
+const MAX_PAGE = 2_147_483_647;
+
 const SORT_DIRECTIONS: readonly SortDirection[] = ['asc', 'desc'];
 const SUPPLIER_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -40,15 +44,16 @@ export function defaultHistoryQuery(today: string): HistoryQuery {
 /** The history view a URL describes (HC1, HC2). Anything missing or invalid takes its default. */
 export function readHistoryQuery(params: ParamMap, today: string): HistoryQuery {
   const defaults = defaultHistoryQuery(today);
-  const from = readDate(params.get('from')) ?? defaults.from;
-  const to = readDate(params.get('to')) ?? defaults.to;
+  // No quote comes from the future, and a far-future day is beyond what the request can express.
+  const from = notAfter(readDate(params.get('from')) ?? defaults.from, today);
+  const to = notAfter(readDate(params.get('to')) ?? defaults.to, today);
   const sortBy = oneOf(params.get('sort'), HISTORY_SORT_FIELDS) ?? defaults.sortBy;
   const size = Number(params.get('size'));
 
   return {
     from: from <= to ? from : to,
     to: from <= to ? to : from,
-    suppliers: [...new Set(params.getAll('suppliers').filter((id) => SUPPLIER_ID.test(id)))],
+    suppliers: [...new Set(params.getAll('suppliers').filter(isSupplierId))],
     origin: (params.get('origin') ?? '').slice(0, MAX_TEXT_LENGTH),
     destination: (params.get('destination') ?? '').slice(0, MAX_TEXT_LENGTH),
     includeFailures: params.get('failures') === 'true',
@@ -99,9 +104,20 @@ function readDate(value: string | null): string | undefined {
   return value !== null && isIsoDate(value) ? value : undefined;
 }
 
+function notAfter(date: string, latest: string): string {
+  // ISO calendar dates compare correctly as text.
+  return date > latest ? latest : date;
+}
+
 function readPage(value: string | null): number | undefined {
   const page = Number(value);
-  return value !== null && Number.isInteger(page) && page >= 1 ? page : undefined;
+  return value !== null && Number.isInteger(page) && page >= 1 && page <= MAX_PAGE
+    ? page
+    : undefined;
+}
+
+function isSupplierId(value: string): boolean {
+  return value.length <= MAX_SUPPLIER_ID_LENGTH && SUPPLIER_ID.test(value);
 }
 
 function oneOf<T extends string>(value: string | null, options: readonly T[]): T | undefined {

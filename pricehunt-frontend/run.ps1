@@ -39,7 +39,13 @@ if (-not (Get-Command 'node' -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$nodeVersionText = (& node --version).TrimStart('v')
+$nodeVersionOutput = & node --version
+if ($LASTEXITCODE -ne 0 -or -not $nodeVersionOutput) {
+    Write-Host "'node --version' failed (exit code $LASTEXITCODE). Check the Node.js installation and run this script again." -ForegroundColor Red
+    exit 1
+}
+
+$nodeVersionText = "$nodeVersionOutput".Trim().TrimStart('v')
 $nodeVersion = $null
 if (-not [version]::TryParse(($nodeVersionText -replace '-.*$', ''), [ref]$nodeVersion) -or -not (Test-NodeVersion $nodeVersion)) {
     Write-Host "Node.js $requiredNode is required; found $nodeVersionText." -ForegroundColor Red

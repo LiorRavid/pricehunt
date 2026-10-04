@@ -70,8 +70,8 @@ What the scripts do:
 
 | Suite | Where | What it covers |
 | --- | --- | --- |
-| Backend, 200 tests | `pricehunt-backend/tests` | Domain rules; the search engine on fake time (deadline, cancellation, isolation); EF Core on real SQLite files; the API over `WebApplicationFactory`, reading the SSE stream event by event; architecture rules (ArchUnitNET). |
-| Frontend unit, 151 tests | `pricehunt-frontend/src` (Vitest) | The SSE parser and client, the reducer and stores, the URL mapping, date conversion, and every component's rendering states. |
+| Backend, 219 tests | `pricehunt-backend/tests` | Domain rules; the search engine on fake time (deadline, cancellation, isolation); EF Core on real SQLite files; the API over `WebApplicationFactory`, reading the SSE stream event by event; architecture rules (ArchUnitNET). |
+| Frontend unit, 156 tests | `pricehunt-frontend/src` (Vitest) | The SSE parser and client, the reducer and stores, the URL mapping, date conversion, and every component's rendering states. |
 | End-to-end, 14 scenarios | `pricehunt-frontend/e2e` (Playwright) | Streaming order, the deadline, cancellation, validation, the history screen, API failures, axe accessibility checks and keyboard-only use, against the real API. |
 
 **Backend** (from `pricehunt-backend`):
@@ -282,14 +282,14 @@ erDiagram
 | `SearchId` | TEXT | no | Foreign key to `Searches`; deleted with the search. |
 | `SupplierId` | TEXT (64) | no | Foreign key to `Suppliers`. |
 | `Outcome` | TEXT (16) | no | `Succeeded`, `Failed`, `TimedOut` or `Cancelled`. |
-| `PriceMinorUnits` | INTEGER | yes | The price in cents; null unless the supplier quoted. Indexed for price sorting. |
+| `PriceMinorUnits` | INTEGER | yes | The price in cents; null unless the supplier quoted. Indexed. |
 | `Currency` | TEXT (3) | yes | ISO 4217, e.g. `USD`. |
 | `ResponseTimeMs` | INTEGER | no | How long the supplier took, or how long the search waited. Indexed. |
 | `ReceivedAt` | TEXT | no | UTC. Indexed. |
 | `ErrorCode` | TEXT (64) | yes | For failures, e.g. `supplier_unavailable`. |
 | `ErrorMessage` | TEXT (500) | yes | For failures. |
 
-Indexes on `SupplierResponses` cover every history filter and sort: `ReceivedAt`, (`Outcome`, `ReceivedAt`), (`SupplierId`, `ReceivedAt`), `PriceMinorUnits` and `ResponseTimeMs`. A **unique** index on (`SearchId`, `SupplierId`) guarantees one outcome per supplier per search.
+Indexes on `SupplierResponses`: `ReceivedAt`, (`Outcome`, `ReceivedAt`), (`SupplierId`, `ReceivedAt`), `PriceMinorUnits` and `ResponseTimeMs`. Every history query has a date range, so SQLite reads the matching rows through (`Outcome`, `ReceivedAt`), or (`SupplierId`, `ReceivedAt`) when suppliers are chosen, and then sorts them; the price, response-time and location indexes don't serve the screen's queries (a location filter is a substring match, which no index can use). A **unique** index on (`SearchId`, `SupplierId`) guarantees one outcome per supplier per search.
 
 **`Suppliers`** (`Id` slug primary key, `Name` indexed) is synchronised from configuration at startup.
 
@@ -478,3 +478,7 @@ The code was written with an AI coding agent. My part was to design the solution
   - End-to-end tests cover the user-visible behaviour, and they run three times in a row to catch flakiness.
 - **I required checks in a real browser, not only unit tests.** Every UI change was verified through Playwright MCP and Chrome DevTools MCP, which caught the six problems listed above.
 - **I reviewed the code myself for clean code and best practices:** naming, responsibilities and method size, the dependency rule between layers, async code and cancellation, EF Core usage, and the Angular style guide and Tailwind conventions.
+
+**Code Review**
+- **I created the instructions for an AI code review, and managed its changes myself.** The instructions set the standards (clean code and the best practices above) and a fix policy: rank every finding by severity, fix only small, safe, test-covered issues, and propose anything larger or riskier instead of changing it. The one hard rule was no commits. Every change stayed uncommitted, with the reason for it, until I had reviewed the diff and decided what to keep.
+- **I manually reviewed the code

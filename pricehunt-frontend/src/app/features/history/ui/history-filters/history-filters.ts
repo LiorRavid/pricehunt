@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type OutputEmitterRef,
+} from '@angular/core';
+import { isIsoDate } from '../../../../shared/dates/local-date';
 import type { Supplier } from '../../../../shared/suppliers/supplier';
 import type { HistoryQuery } from '../../domain/history-query';
 import { SupplierMultiselect } from '../supplier-multiselect/supplier-multiselect';
@@ -26,4 +33,25 @@ export class HistoryFilters {
   readonly originInput = output<string>();
   readonly destinationInput = output<string>();
   readonly includeFailuresChange = output<boolean>();
+
+  protected changeFrom(field: HTMLInputElement): void {
+    this.reportDate(field, this.query().from, this.fromChange);
+  }
+
+  protected changeTo(field: HTMLInputElement): void {
+    this.reportDate(field, this.query().to, this.toChange);
+  }
+
+  private reportDate(
+    field: HTMLInputElement,
+    inUse: string,
+    change: OutputEmitterRef<string>,
+  ): void {
+    if (isIsoDate(field.value)) {
+      change.emit(field.value);
+    } else {
+      // The filter ignores a cleared or impossible date, so show the date it still uses.
+      field.value = inUse;
+    }
+  }
 }

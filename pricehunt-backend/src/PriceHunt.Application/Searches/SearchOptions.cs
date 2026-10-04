@@ -12,7 +12,10 @@ public sealed class SearchOptions
     [Range(typeof(TimeSpan), "00:00:01", "00:01:00")]
     public TimeSpan MaxDuration { get; set; } = TimeSpan.FromSeconds(6);
 
-    /// <summary>Gets or sets how long one database write may take; writes never use the request token.</summary>
+    /// <summary>
+    /// Gets or sets how long one database write may take, including any wait for a locked database.
+    /// Writes after the search is first stored don't use the request token.
+    /// </summary>
     [Range(typeof(TimeSpan), "00:00:01", "00:01:00")]
     public TimeSpan PersistenceTimeout { get; set; } = TimeSpan.FromSeconds(5);
 }
